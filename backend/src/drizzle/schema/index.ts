@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, timestamp, boolean, integer, jsonb, pgEnum } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, varchar, text, timestamp, boolean, integer, jsonb, pgEnum, date, decimal } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
 // ============================================================
@@ -14,6 +14,55 @@ export const estadoClienteEnum = pgEnum('estado_cliente', ['prospecto', 'activo'
 export const tipoContactoEnum = pgEnum('tipo_contacto', ['principal', 'facturacion', 'tecnico', 'comercial'])
 export const etapaOportunidadEnum = pgEnum('etapa_oportunidad', ['contacto', 'calificacion', 'propuesta', 'negociacion', 'cerrado_ganado', 'cerrado_perdido'])
 export const tipoActividadEnum = pgEnum('tipo_actividad', ['llamada', 'reunion', 'email', 'visita', 'tarea', 'nota'])
+export const estadoProyecto = pgEnum('estado_proyecto', [
+  'propuesta',
+  'aprobado', 
+  'iniciado',
+  'en_progreso',
+  'en_revision',
+  'cerrado',
+  'pausado',
+  'cancelado'
+])
+
+export const prioridadProyecto = pgEnum('prioridad_proyecto', [
+  'baja',
+  'media', 
+  'alta',
+  'critica'
+])
+
+export const tipoHito = pgEnum('tipo_hito', [
+  'inicio',
+  'entrega',
+  'revision',
+  'aprobacion',
+  'cierre'
+])
+
+export const estadoRecurso = pgEnum('estado_recurso', [
+  'asignado',
+  'disponible',
+  'no_disponible'
+])
+
+export const tipoDocumento = pgEnum('tipo_documento', [
+  'requisitos',
+  'diseno',
+  'contrato',
+  'informe',
+  'factura',
+  'otros'
+])
+
+export const tipoSeguimiento = pgEnum('tipo_seguimiento', [
+  'avance',
+  'riesgo',
+  'cambio',
+  'decision',
+  'problema'
+])
+
 export const estadoCotizacionEnum = pgEnum('estado_cotizacion', ['borrador', 'enviada', 'aceptada', 'rechazada', 'convertida'])
 
 // ============================================================
@@ -337,6 +386,109 @@ export const cotizacionItems = pgTable('cotizacion_items', {
 })
 
 // ============================================================
+// PROJECT MANAGEMENT MODULE
+// ============================================================
+
+export const proyectos = pgTable('proyectos', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  nombre: varchar('nombre', { length: 200 }).notNull(),
+  descripcion: text('descripcion'),
+  codigo: varchar('codigo', { length: 50 }).unique(),
+  clienteId: uuid('cliente_id').references(() => clientes.id, { onDelete: 'set null' }),
+  areaId: uuid('area_id').references(() => areas.id, { onDelete: 'set null' }),
+  responsableId: uuid('responsable_id').references(() => usuarios.id, { onDelete: 'set null' }),
+  estado: estadoProyecto().default('propuesta').notNull(),
+  prioridad: prioridadProyecto().default('media').notNull(),
+  fechaInicio: date('fecha_inicio'),
+  fechaFin: date('fecha_fin'),
+  fechaInicioReal: date('fecha_inicio_real'),
+  fechaFinReal: date('fecha_fin_real'),
+  presupuesto: decimal('presupuesto', { precision: 15, scale: 2 }),
+  costoReal: decimal('costo_real', { precision: 15, scale: 2 }),
+  progreso: integer('progreso').default(0),
+  notas: text('notas'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+})
+
+export const centrosCosto = pgTable('centros_costo', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  nombre: varchar('nombre', { length: 100 }).notNull(),
+  codigo: varchar('codigo', { length: 20 }).unique(),
+  descripcion: text('descripcion'),
+  padreId: uuid('padre_id').references(() => centrosCosto.id, { onDelete: 'set null' }),
+  areaId: uuid('area_id').references(() => areas.id, { onDelete: 'set null' }),
+  responsableId: uuid('responsable_id').references(() => usuarios.id, { onDelete: 'set null' }),
+  activo: boolean('activo').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+})
+
+export const hitos = pgTable('hitos', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  proyectoId: uuid('proyecto_id').references(() => proyectos.id, { onDelete: 'cascade' }).notNull(),
+  nombre: varchar('nombre', { length: 200 }).notNull(),
+  descripcion: text('descripcion'),
+  tipo: tipoHito().notNull(),
+  fechaPlanificada: date('fecha_planificada').notNull(),
+  fechaReal: date('fecha_real'),
+  completado: boolean('completado').default(false),
+  responsableId: uuid('responsable_id').references(() => usuarios.id, { onDelete: 'set null' }),
+  notas: text('notas'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+})
+
+export const proyectoRecursos = pgTable('proyecto_recursos', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  proyectoId: uuid('proyecto_id').references(() => proyectos.id, { onDelete: 'cascade' }).notNull(),
+  usuarioId: uuid('usuario_id').references(() => usuarios.id, { onDelete: 'cascade' }).notNull(),
+  areaId: uuid('area_id').references(() => areas.id, { onDelete: 'set null' }),
+  rol: varchar('rol', { length: 100 }).notNull(),
+  estado: estadoRecurso().default('disponible').notNull(),
+  horasAsignadas: integer('horas_asignadas'),
+  horasUtilizadas: integer('horas_utilizadas').default(0),
+  costoHora: decimal('costo_hora', { precision: 10, scale: 2 }),
+  fechaAsignacion: date('fecha_asignacion').notNull(),
+  fechaLiberacion: date('fecha_liberacion'),
+  notas: text('notas'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+})
+
+export const proyectoDocumentos = pgTable('proyecto_documentos', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  proyectoId: uuid('proyecto_id').references(() => proyectos.id, { onDelete: 'cascade' }).notNull(),
+  nombre: varchar('nombre', { length: 255 }).notNull(),
+  descripcion: text('descripcion'),
+  tipo: tipoDocumento().notNull(),
+  url: varchar('url', { length: 500 }),
+  tamano: integer('tamano'),
+  version: varchar('version', { length: 20 }).default('1.0'),
+  subidoPor: uuid('subido_por').references(() => usuarios.id, { onDelete: 'set null' }).notNull(),
+  fechaSubida: date('fecha_subida').notNull(),
+  etiquetas: text('etiquetas'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+})
+
+export const proyectoSeguimiento = pgTable('proyecto_seguimiento', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  proyectoId: uuid('proyecto_id').references(() => proyectos.id, { onDelete: 'cascade' }).notNull(),
+  tipo: tipoSeguimiento().notNull(),
+  titulo: varchar('titulo', { length: 200 }).notNull(),
+  descripcion: text('descripcion'),
+  reportadoPor: uuid('reportado_por').references(() => usuarios.id, { onDelete: 'set null' }).notNull(),
+  fechaReporte: date('fecha_reporte').notNull(),
+  impacto: varchar('impacto', { length: 20 }),
+  acciones: text('acciones'),
+  estado: varchar('estado', { length: 20 }).default('abierto'),
+  fechaCierre: date('fecha_cierre'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+})
+
+// ============================================================
 // COMERCIAL MODULE RELATIONS
 // ============================================================
 
@@ -380,3 +532,85 @@ export const cotizacionesRelations = relations(cotizaciones, ({ one, many }) => 
 export const cotizacionItemsRelations = relations(cotizacionItems, ({ one }) => ({
   cotizacion: one(cotizaciones, { fields: [cotizacionItems.cotizacionId], references: [cotizaciones.id] }),
 }))
+
+// ============================================================
+// PROJECT MANAGEMENT MODULE RELATIONS
+// ============================================================
+
+export const proyectosRelations = relations(proyectos, ({ one, many }) => ({
+  cliente: one(clientes, { fields: [proyectos.clienteId], references: [clientes.id] }),
+  area: one(areas, { fields: [proyectos.areaId], references: [areas.id] }),
+  responsable: one(usuarios, { fields: [proyectos.responsableId], references: [usuarios.id] }),
+  hitos: many(hitos),
+  recursos: many(proyectoRecursos),
+  documentos: many(proyectoDocumentos),
+  seguimiento: many(proyectoSeguimiento),
+}))
+
+export const centrosCostoRelations = relations(centrosCosto, ({ one, many }) => ({
+  padre: one(centrosCosto, { fields: [centrosCosto.padreId], references: [centrosCosto.id] }),
+  hijos: many(centrosCosto),
+  area: one(areas, { fields: [centrosCosto.areaId], references: [areas.id] }),
+  responsable: one(usuarios, { fields: [centrosCosto.responsableId], references: [usuarios.id] }),
+}))
+
+export const hitosRelations = relations(hitos, ({ one }) => ({
+  proyecto: one(proyectos, { fields: [hitos.proyectoId], references: [proyectos.id] }),
+  responsable: one(usuarios, { fields: [hitos.responsableId], references: [usuarios.id] }),
+}))
+
+export const proyectoRecursosRelations = relations(proyectoRecursos, ({ one }) => ({
+  proyecto: one(proyectos, { fields: [proyectoRecursos.proyectoId], references: [proyectos.id] }),
+  usuario: one(usuarios, { fields: [proyectoRecursos.usuarioId], references: [usuarios.id] }),
+  area: one(areas, { fields: [proyectoRecursos.areaId], references: [areas.id] }),
+}))
+
+export const proyectoDocumentosRelations = relations(proyectoDocumentos, ({ one }) => ({
+  proyecto: one(proyectos, { fields: [proyectoDocumentos.proyectoId], references: [proyectos.id] }),
+  subidoPor: one(usuarios, { fields: [proyectoDocumentos.subidoPor], references: [usuarios.id] }),
+}))
+
+export const proyectoSeguimientoRelations = relations(proyectoSeguimiento, ({ one }) => ({
+  proyecto: one(proyectos, { fields: [proyectoSeguimiento.proyectoId], references: [proyectos.id] }),
+  reportadoPor: one(usuarios, { fields: [proyectoSeguimiento.reportadoPor], references: [usuarios.id] }),
+}))
+
+// ============================================================
+// DATABASE EXPORT
+// ============================================================
+
+export const schema = {
+  usuarios,
+  areas,
+  roles,
+  permisos,
+  usuariosRoles,
+  tokensSesion: tokenesSesion,
+  auditoriaLogs,
+  notificaciones,
+  configuraciones,
+  clientes,
+  contactos,
+  oportunidades,
+  actividades,
+  cotizaciones,
+  cotizacionItems,
+  proyectos,
+  centrosCosto,
+  hitos,
+  proyectoRecursos,
+  proyectoDocumentos,
+  proyectoSeguimiento,
+  clientesRelations,
+  contactosRelations,
+  oportunidadesRelations,
+  actividadesRelations,
+  cotizacionesRelations,
+  cotizacionItemsRelations,
+  proyectosRelations,
+  centrosCostoRelations,
+  hitosRelations,
+  proyectoRecursosRelations,
+  proyectoDocumentosRelations,
+  proyectoSeguimientoRelations,
+}
