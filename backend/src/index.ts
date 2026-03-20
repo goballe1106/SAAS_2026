@@ -33,7 +33,11 @@ async function start() {
 
   // CORS
   await fastify.register(cors, {
-    origin: '*' || 'http://localhost:5173',
+    origin: [
+      'http://localhost:5173',
+      'http://192.168.1.43:5173',
+      process.env.APP_URL || '',
+    ].filter(Boolean),
     credentials: true,
   });
 
