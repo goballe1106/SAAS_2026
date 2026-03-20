@@ -5,6 +5,7 @@ import LoginPage from './pages/auth/LoginPage'
 import DashboardPage from './pages/dashboard/DashboardPage'
 import UsuariosPage from './pages/usuarios/UsuariosPage'
 import AreasPage from './pages/areas/AreasPage'
+import { Toaster } from './components/ui/toast'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore()
@@ -26,6 +27,7 @@ export default function App() {
         <Route path="/areas" element={<PrivateRoute><Layout><AreasPage /></Layout></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <Toaster />
     </BrowserRouter>
   )
 }
