@@ -1,6 +1,4 @@
-import { defineConfig } from 'drizzle-kit'
-
-export default defineConfig({
+export default {
   schema: './src/drizzle/schema/index.ts',
   out: './drizzle/migrations',
   dialect: 'postgresql',
@@ -11,4 +9,4 @@ export default defineConfig({
     password: process.env.DB_PASSWORD || 'ErpSas2026!',
     database: process.env.DB_NAME || 'erp_sas',
   },
-})
+}
