@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../stores/authStore'
-import {
-  LayoutDashboard,
-  Users,
-  Building2,
+import { 
+  LayoutDashboard, 
+  Users, 
+  Building2, 
   Shield,
   LogOut,
   Menu,
@@ -23,6 +23,7 @@ import {
   BarChart3,
   FolderTree,
   Briefcase,
+  FolderKanban,
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -43,6 +44,18 @@ const navigation = [
     href: '/clientes', 
     icon: Users,
     description: 'Gestión de clientes'
+  },
+  { 
+    name: 'Cotizaciones', 
+    href: '/cotizaciones', 
+    icon: FileText,
+    description: 'Propuestas comerciales'
+  },
+  { 
+    name: 'Proyectos', 
+    href: '/proyectos', 
+    icon: FolderKanban,
+    description: 'Gestión de proyectos'
   },
   { 
     name: 'Usuarios', 
