@@ -74,7 +74,7 @@ services:
     container_name: erp_sas_frontend
     restart: unless-stopped
     environment:
-      VITE_API_URL: http://api:3001
+      VITE_API_URL: http://192.168.1.43:3000
     ports:
       - "5173:5173"
     volumes:
