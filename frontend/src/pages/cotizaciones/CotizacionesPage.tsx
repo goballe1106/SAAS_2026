@@ -134,8 +134,9 @@ export default function CotizacionesPage() {
                       <SelectValue placeholder="Seleccionar cliente" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">Empresa ABC</SelectItem>
-                      <SelectItem value="2">Soluciones Tech</SelectItem>
+                      <SelectItem value="empresa-abc">Empresa ABC</SelectItem>
+                      <SelectItem value="soluciones-tech">Soluciones Tech</SelectItem>
+                      <SelectItem value="innovate-systems">Innovate Systems</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -146,8 +147,8 @@ export default function CotizacionesPage() {
                       <SelectValue placeholder="Seleccionar oportunidad" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">Proyecto Web</SelectItem>
-                      <SelectItem value="2">Implementación ERP</SelectItem>
+                      <SelectItem value="proyecto-web">Proyecto Web</SelectItem>
+                      <SelectItem value="implementacion-erp">Implementación ERP</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -195,8 +196,8 @@ export default function CotizacionesPage() {
                       <SelectValue placeholder="Seleccionar moneda" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="USD">USD</SelectItem>
-                      <SelectItem value="EUR">EUR</SelectItem>
+                      <SelectItem value="usd">USD</SelectItem>
+                      <SelectItem value="eur">EUR</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -313,7 +314,6 @@ export default function CotizacionesPage() {
                 <SelectValue placeholder="Todos los estados" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos los estados</SelectItem>
                 <SelectItem value="borrador">Borrador</SelectItem>
                 <SelectItem value="enviada">Enviada</SelectItem>
                 <SelectItem value="aceptada">Aceptada</SelectItem>

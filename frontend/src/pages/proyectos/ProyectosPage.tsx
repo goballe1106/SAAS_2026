@@ -158,8 +158,9 @@ export default function ProyectosPage() {
                       <SelectValue placeholder="Seleccionar cliente" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">Empresa ABC</SelectItem>
-                      <SelectItem value="2">Soluciones Tech</SelectItem>
+                      <SelectItem value="empresa-abc">Empresa ABC</SelectItem>
+                      <SelectItem value="soluciones-tech">Soluciones Tech</SelectItem>
+                      <SelectItem value="innovate-systems">Innovate Systems</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -170,8 +171,9 @@ export default function ProyectosPage() {
                       <SelectValue placeholder="Seleccionar responsable" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">Juan Pérez</SelectItem>
-                      <SelectItem value="2">María García</SelectItem>
+                      <SelectItem value="juan-perez">Juan Pérez</SelectItem>
+                      <SelectItem value="maria-garcia">María García</SelectItem>
+                      <SelectItem value="carlos-lopez">Carlos López</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -340,7 +342,7 @@ export default function ProyectosPage() {
                 <SelectValue placeholder="Todos los estados" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos los estados</SelectItem>
+                <SelectItem value="todos">Todos los estados</SelectItem>
                 <SelectItem value="planificacion">Planificación</SelectItem>
                 <SelectItem value="en_progreso">En Progreso</SelectItem>
                 <SelectItem value="completado">Completado</SelectItem>
