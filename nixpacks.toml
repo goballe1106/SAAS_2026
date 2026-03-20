@@ -1,0 +1,6 @@
+[build]
+build = "cd backend && npm install && npm run build"
+start = "npm run start"
+
+[phase.build]
+nixpacks = "nodejs-20"
