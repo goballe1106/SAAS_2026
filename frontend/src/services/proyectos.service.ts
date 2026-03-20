@@ -329,7 +329,7 @@ export const proyectosService = {
   },
 
   async createHito(data: CreateHitoInput): Promise<Hito> {
-    const response = await api.post('/proyectos/${data.proyectoId}/hitos`, data)
+    const response = await api.post(`/proyectos/${data.proyectoId}/hitos`, data)
     return response.data
   },
 
