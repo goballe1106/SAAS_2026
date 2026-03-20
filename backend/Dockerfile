@@ -2,6 +2,8 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+RUN npm install -g tsx
+
 COPY package*.json ./
 RUN npm install
 
@@ -9,4 +11,4 @@ COPY . .
 
 EXPOSE 3001
 
-CMD ["node", "src/index.ts"]
+CMD ["tsx", "src/index.ts"]
