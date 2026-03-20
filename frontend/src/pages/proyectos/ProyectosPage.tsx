@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { proyectosService, type Proyecto, type CreateProyectoInput } from '../../services/proyectos.service'
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
@@ -22,7 +24,10 @@ import {
   Pause,
   Flag,
   Target,
-  BarChart3
+  BarChart3,
+  DollarSign,
+  UserCheck,
+  MapPin
 } from 'lucide-react'
 import { 
   Dialog, 
@@ -33,28 +38,75 @@ import {
 } from '../../components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import { Textarea } from '../../components/ui/textarea'
+import { toast } from 'sonner'
 
 export default function ProyectosPage() {
   const [search, setSearch] = useState('')
   const [estado, setEstado] = useState('')
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  
+  const queryClient = useQueryClient()
+
+  // Queries
+  const { data: proyectosData, isLoading, error } = useQuery({
+    queryKey: ['proyectos', currentPage, search, estado],
+    queryFn: () => proyectosService.getProyectos(currentPage, 10, search, estado),
+  })
+
+  const { data: stats } = useQuery({
+    queryKey: ['proyectos-stats'],
+    queryFn: () => proyectosService.getProyectosStats(),
+  })
+
+  // Mutations
+  const createProyectoMutation = useMutation({
+    mutationFn: (data: CreateProyectoInput) => proyectosService.createProyecto(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['proyectos'] })
+      queryClient.invalidateQueries({ queryKey: ['proyectos-stats'] })
+      setIsCreateDialogOpen(false)
+      toast.success('Proyecto creado exitosamente')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Error al crear proyecto')
+    },
+  })
+
+  const deleteProyectoMutation = useMutation({
+    mutationFn: (id: string) => proyectosService.deleteProyecto(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['proyectos'] })
+      queryClient.invalidateQueries({ queryKey: ['proyectos-stats'] })
+      toast.success('Proyecto eliminado exitosamente')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Error al eliminar proyecto')
+    },
+  })
 
   const getEstadoBadge = (estado: string) => {
     const colors = {
-      planificacion: 'bg-blue-100 text-blue-800',
+      propuesta: 'bg-blue-100 text-blue-800',
+      aprobado: 'bg-green-100 text-green-800',
+      iniciado: 'bg-purple-100 text-purple-800',
       en_progreso: 'bg-yellow-100 text-yellow-800',
-      completado: 'bg-green-100 text-green-800',
-      pausado: 'bg-orange-100 text-orange-800',
-      cancelado: 'bg-red-100 text-red-800',
+      en_revision: 'bg-orange-100 text-orange-800',
+      cerrado: 'bg-gray-100 text-gray-800',
+      pausado: 'bg-red-100 text-red-800',
+      cancelado: 'bg-red-200 text-red-900',
     }
     return colors[estado as keyof typeof colors] || 'bg-gray-100 text-gray-800'
   }
 
   const getEstadoIcon = (estado: string) => {
     const icons = {
-      planificacion: Calendar,
+      propuesta: Calendar,
+      aprobado: CheckCircle2,
+      iniciado: Play,
       en_progreso: Play,
-      completado: CheckCircle2,
+      en_revision: Clock,
+      cerrado: CheckCircle2,
       pausado: Pause,
       cancelado: AlertCircle,
     }
@@ -71,63 +123,30 @@ export default function ProyectosPage() {
     return colors[prioridad as keyof typeof colors] || 'bg-gray-100 text-gray-800'
   }
 
-  // Datos de ejemplo
-  const proyectos = [
-    {
-      id: '1',
-      nombre: 'Sitio Web Corporativo',
-      cliente: 'Empresa ABC',
-      estado: 'en_progreso',
-      prioridad: 'alta',
-      fechaInicio: '2024-03-01',
-      fechaFin: '2024-06-30',
-      progreso: 65,
-      responsable: 'Juan Pérez',
-      presupuesto: 25000.00,
-      descripcion: 'Desarrollo completo de sitio web corporativo con CMS integrado'
-    },
-    {
-      id: '2',
-      nombre: 'Implementación ERP',
-      cliente: 'Soluciones Tech',
-      estado: 'planificacion',
-      prioridad: 'critica',
-      fechaInicio: '2024-04-01',
-      fechaFin: '2024-12-31',
-      progreso: 15,
-      responsable: 'María García',
-      presupuesto: 85000.00,
-      descripcion: 'Implementación de sistema ERP para gestión empresarial'
-    },
-    {
-      id: '3',
-      nombre: 'App Móvil',
-      cliente: 'Innovate Systems',
-      estado: 'completado',
-      prioridad: 'media',
-      fechaInicio: '2024-01-15',
-      fechaFin: '2024-03-15',
-      progreso: 100,
-      responsable: 'Carlos López',
-      presupuesto: 18000.00,
-      descripcion: 'Aplicación móvil para iOS y Android'
-    }
-  ]
+  const handleCreateProyecto = (data: CreateProyectoInput) => {
+    createProyectoMutation.mutate(data)
+  }
 
-  const stats = {
-    total: 3,
-    porEstado: [
-      { estado: 'planificacion', count: 1 },
-      { estado: 'en_progreso', count: 1 },
-      { estado: 'completado', count: 1 }
-    ],
-    porPrioridad: [
-      { prioridad: 'critica', count: 1 },
-      { prioridad: 'alta', count: 1 },
-      { prioridad: 'media', count: 1 }
-    ],
-    presupuestoTotal: 128000.00,
-    progresoPromedio: 60
+  const handleDeleteProyecto = (id: string) => {
+    if (confirm('¿Está seguro de eliminar este proyecto?')) {
+      deleteProyectoMutation.mutate(id)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-red-600">Error al cargar proyectos</p>
+      </div>
+    )
   }
 
   return (
@@ -149,108 +168,7 @@ export default function ProyectosPage() {
             <DialogHeader>
               <DialogTitle>Nuevo Proyecto</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="cliente">Cliente</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar cliente" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="empresa-abc">Empresa ABC</SelectItem>
-                      <SelectItem value="soluciones-tech">Soluciones Tech</SelectItem>
-                      <SelectItem value="innovate-systems">Innovate Systems</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="responsable">Responsable</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar responsable" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="juan-perez">Juan Pérez</SelectItem>
-                      <SelectItem value="maria-garcia">María García</SelectItem>
-                      <SelectItem value="carlos-lopez">Carlos López</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="nombre">Nombre del Proyecto</Label>
-                <Input
-                  id="nombre"
-                  placeholder="Nombre del proyecto"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fechaInicio">Fecha Inicio</Label>
-                  <Input
-                    id="fechaInicio"
-                    type="date"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="fechaFin">Fecha Fin</Label>
-                  <Input
-                    id="fechaFin"
-                    type="date"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="prioridad">Prioridad</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar prioridad" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="baja">Baja</SelectItem>
-                      <SelectItem value="media">Media</SelectItem>
-                      <SelectItem value="alta">Alta</SelectItem>
-                      <SelectItem value="critica">Crítica</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="presupuesto">Presupuesto</Label>
-                  <Input
-                    id="presupuesto"
-                    type="number"
-                    placeholder="0.00"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="descripcion">Descripción</Label>
-                <Textarea
-                  id="descripcion"
-                  placeholder="Descripción detallada del proyecto..."
-                  rows={3}
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsCreateDialogOpen(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button>
-                  Crear Proyecto
-                </Button>
-              </div>
-            </div>
+            <CreateProyectoForm onSubmit={handleCreateProyecto} />
           </DialogContent>
         </Dialog>
       </div>
@@ -263,7 +181,7 @@ export default function ProyectosPage() {
             <FolderKanban className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="text-2xl font-bold">{stats?.total || 0}</div>
             <p className="text-xs text-muted-foreground">
               Activos este trimestre
             </p>
@@ -277,7 +195,7 @@ export default function ProyectosPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              {stats.porEstado.find(e => e.estado === 'en_progreso')?.count || 0}
+              {stats?.porEstado.find(e => e.estado === 'en_progreso')?.count || 0}
             </div>
             <p className="text-xs text-muted-foreground">
               En ejecución
@@ -292,7 +210,7 @@ export default function ProyectosPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              ${stats.presupuestoTotal.toLocaleString()}
+              ${stats?.presupuesto.total.toLocaleString() || 0}
             </div>
             <p className="text-xs text-muted-foreground">
               En proyectos activos
@@ -307,7 +225,7 @@ export default function ProyectosPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {stats.progresoPromedio}%
+              {Math.round((proyectosData?.data || []).reduce((acc, p) => acc + (p.progreso || 0), 0) / (proyectosData?.data?.length || 1))}%
             </div>
             <p className="text-xs text-muted-foreground">
               De todos los proyectos
@@ -343,9 +261,12 @@ export default function ProyectosPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos los estados</SelectItem>
-                <SelectItem value="planificacion">Planificación</SelectItem>
+                <SelectItem value="propuesta">Propuesta</SelectItem>
+                <SelectItem value="aprobado">Aprobado</SelectItem>
+                <SelectItem value="iniciado">Iniciado</SelectItem>
                 <SelectItem value="en_progreso">En Progreso</SelectItem>
-                <SelectItem value="completado">Completado</SelectItem>
+                <SelectItem value="en_revision">En Revisión</SelectItem>
+                <SelectItem value="cerrado">Cerrado</SelectItem>
                 <SelectItem value="pausado">Pausado</SelectItem>
                 <SelectItem value="cancelado">Cancelado</SelectItem>
               </SelectContent>
@@ -365,7 +286,7 @@ export default function ProyectosPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {proyectos.map((proyecto) => {
+            {proyectosData?.data.map((proyecto) => {
               const EstadoIcon = getEstadoIcon(proyecto.estado)
               return (
                 <div
@@ -379,26 +300,47 @@ export default function ProyectosPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <h3 className="font-medium">{proyecto.nombre}</h3>
-                        <span className="text-sm text-muted-foreground">
-                          - {proyecto.cliente}
-                        </span>
+                        {proyecto.codigo && (
+                          <span className="text-sm text-muted-foreground">
+                            ({proyecto.codigo})
+                          </span>
+                        )}
+                        {proyecto.cliente && (
+                          <span className="text-sm text-muted-foreground">
+                            - {proyecto.cliente.razonSocial}
+                          </span>
+                        )}
                       </div>
-                      <div className="text-sm text-muted-foreground mt-1">
-                        {proyecto.descripcion}
-                      </div>
+                      {proyecto.descripcion && (
+                        <div className="text-sm text-muted-foreground mt-1">
+                          {proyecto.descripcion}
+                        </div>
+                      )}
                       <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
-                        <div className="flex items-center gap-1">
-                          <Users className="h-3 w-3" />
-                          {proyecto.responsable}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {proyecto.fechaInicio} - {proyecto.fechaFin}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Target className="h-3 w-3" />
-                          ${proyecto.presupuesto.toLocaleString()}
-                        </div>
+                        {proyecto.responsable && (
+                          <div className="flex items-center gap-1">
+                            <UserCheck className="h-3 w-3" />
+                            {proyecto.responsable.nombre} {proyecto.responsable.apellido}
+                          </div>
+                        )}
+                        {proyecto.area && (
+                          <div className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {proyecto.area.nombre}
+                          </div>
+                        )}
+                        {proyecto.fechaInicio && (
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {proyecto.fechaInicio} - {proyecto.fechaFin || 'Sin fecha fin'}
+                          </div>
+                        )}
+                        {proyecto.presupuesto && (
+                          <div className="flex items-center gap-1">
+                            <DollarSign className="h-3 w-3" />
+                            ${proyecto.presupuesto.toLocaleString()}
+                          </div>
+                        )}
                       </div>
                       <div className="mt-3">
                         <div className="flex items-center justify-between text-sm mb-1">
@@ -429,7 +371,11 @@ export default function ProyectosPage() {
                     <Button variant="ghost" size="sm">
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleDeleteProyecto(proyecto.id)}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -437,8 +383,197 @@ export default function ProyectosPage() {
               )
             })}
           </div>
+          
+          {/* Pagination */}
+          {proyectosData?.pagination && (
+            <div className="flex items-center justify-between mt-6">
+              <div className="text-sm text-muted-foreground">
+                Mostrando {proyectosData.data.length} de {proyectosData.pagination.total} proyectos
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                >
+                  Anterior
+                </Button>
+                <span className="text-sm">
+                  Página {currentPage} de {proyectosData.pagination.totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === proyectosData.pagination.totalPages}
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                >
+                  Siguiente
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+// Form component for creating projects
+function CreateProyectoForm({ onSubmit }: { onSubmit: (data: CreateProyectoInput) => void }) {
+  const [formData, setFormData] = useState<CreateProyectoInput>({
+    nombre: '',
+    descripcion: '',
+    codigo: '',
+    clienteId: '',
+    areaId: '',
+    responsableId: '',
+    estado: 'propuesta',
+    prioridad: 'media',
+    fechaInicio: '',
+    fechaFin: '',
+    presupuesto: undefined,
+    notas: '',
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    onSubmit(formData)
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="nombre">Nombre del Proyecto</Label>
+          <Input
+            id="nombre"
+            value={formData.nombre}
+            onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+            placeholder="Nombre del proyecto"
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="codigo">Código</Label>
+          <Input
+            id="codigo"
+            value={formData.codigo}
+            onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
+            placeholder="Código del proyecto"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="descripcion">Descripción</Label>
+        <Textarea
+          id="descripcion"
+          value={formData.descripcion}
+          onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+          placeholder="Descripción detallada del proyecto..."
+          rows={3}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="estado">Estado</Label>
+          <Select value={formData.estado} onValueChange={(value) => setFormData({ ...formData, estado: value as any })}>
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccionar estado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="propuesta">Propuesta</SelectItem>
+              <SelectItem value="aprobado">Aprobado</SelectItem>
+              <SelectItem value="iniciado">Iniciado</SelectItem>
+              <SelectItem value="en_progreso">En Progreso</SelectItem>
+              <SelectItem value="en_revision">En Revisión</SelectItem>
+              <SelectItem value="cerrado">Cerrado</SelectItem>
+              <SelectItem value="pausado">Pausado</SelectItem>
+              <SelectItem value="cancelado">Cancelado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="prioridad">Prioridad</Label>
+          <Select value={formData.prioridad} onValueChange={(value) => setFormData({ ...formData, prioridad: value as any })}>
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccionar prioridad" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="baja">Baja</SelectItem>
+              <SelectItem value="media">Media</SelectItem>
+              <SelectItem value="alta">Alta</SelectItem>
+              <SelectItem value="critica">Crítica</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="fechaInicio">Fecha Inicio</Label>
+          <Input
+            id="fechaInicio"
+            type="date"
+            value={formData.fechaInicio}
+            onChange={(e) => setFormData({ ...formData, fechaInicio: e.target.value })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="fechaFin">Fecha Fin</Label>
+          <Input
+            id="fechaFin"
+            type="date"
+            value={formData.fechaFin}
+            onChange={(e) => setFormData({ ...formData, fechaFin: e.target.value })}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="presupuesto">Presupuesto</Label>
+          <Input
+            id="presupuesto"
+            type="number"
+            placeholder="0.00"
+            value={formData.presupuesto || ''}
+            onChange={(e) => setFormData({ ...formData, presupuesto: e.target.value ? Number(e.target.value) : undefined })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="responsable">Responsable</Label>
+          <Select value={formData.responsableId} onValueChange={(value) => setFormData({ ...formData, responsableId: value })}>
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccionar responsable" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="juan-perez">Juan Pérez</SelectItem>
+              <SelectItem value="maria-garcia">María García</SelectItem>
+              <SelectItem value="carlos-lopez">Carlos López</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="notas">Notas</Label>
+        <Textarea
+          id="notas"
+          value={formData.notas}
+          onChange={(e) => setFormData({ ...formData, notas: e.target.value })}
+          placeholder="Notas adicionales..."
+          rows={2}
+        />
+      </div>
+
+      <div className="flex justify-end gap-2 pt-4">
+        <Button type="submit" disabled={!formData.nombre}>
+          Crear Proyecto
+        </Button>
+      </div>
+    </form>
   )
 }
