@@ -1,113 +1,210 @@
-import { useEffect, useState } from 'react'
-import { usuariosService } from '@/services/api'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Plus, Search, Pencil, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { usuariosService, areasService, rolesService } from '../../services/api'
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
+import { Button } from '../../components/ui/button'
+import { Input } from '../../components/ui/input'
+import { Label } from '../../components/ui/label'
+import { Users, Plus, Search, Trash2, Pencil, X, Loader2 } from 'lucide-react'
 
 export default function UsuariosPage() {
-  const [usuarios, setUsuarios] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
+  const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [form, setForm] = useState({ email: '', password: '', nombre: '', apellido: '', telefono: '', areaId: '', rolId: '' })
 
-  useEffect(() => {
-    loadUsuarios()
-  }, [])
+  const { data, isLoading } = useQuery({
+    queryKey: ['usuarios', search],
+    queryFn: () => usuariosService.getAll({ search, per_page: 50 }),
+  })
 
-  const loadUsuarios = async () => {
-    try {
-      const response = await usuariosService.getAll({ search })
-      if (response.success) {
-        setUsuarios(response.data)
-      }
-    } catch (error) {
-      console.error('Error loading usuarios:', error)
-    } finally {
-      setLoading(false)
+  const { data: areasData } = useQuery({ queryKey: ['areas-options'], queryFn: areasService.getOptions })
+  const { data: rolesData } = useQuery({ queryKey: ['roles-options'], queryFn: rolesService.getOptions })
+
+  const createMutation = useMutation({
+    mutationFn: (body: any) => usuariosService.create(body),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['usuarios'] }); resetForm() },
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, body }: any) => usuariosService.update(id, body),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['usuarios'] }); resetForm() },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => usuariosService.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['usuarios'] }),
+  })
+
+  const resetForm = () => {
+    setForm({ email: '', password: '', nombre: '', apellido: '', telefono: '', areaId: '', rolId: '' })
+    setShowForm(false)
+    setEditingId(null)
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, body: { nombre: form.nombre, apellido: form.apellido, telefono: form.telefono, areaId: form.areaId || undefined } })
+    } else {
+      createMutation.mutate({ ...form, areaId: form.areaId || undefined, rolId: form.rolId || undefined })
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (confirm('¿Estás seguro de eliminar este usuario?')) {
-      try {
-        await usuariosService.delete(id)
-        loadUsuarios()
-      } catch (error) {
-        console.error('Error deleting usuario:', error)
-      }
-    }
+  const handleEdit = (user: any) => {
+    setForm({ email: user.email, password: '', nombre: user.nombre, apellido: user.apellido, telefono: user.telefono || '', areaId: user.areaId || '', rolId: '' })
+    setEditingId(user.id)
+    setShowForm(true)
   }
+
+  const usuarios = data?.data || []
+  const areas = areasData?.data || []
+  const roles = rolesData?.data || []
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Usuarios</h1>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Nuevo Usuario
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Users className="h-6 w-6" /> Usuarios
+          </h1>
+          <p className="text-muted-foreground">Gestión de usuarios del sistema</p>
+        </div>
+        <Button onClick={() => { resetForm(); setShowForm(true) }}>
+          <Plus className="h-4 w-4 mr-2" /> Nuevo Usuario
         </Button>
       </div>
 
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Buscar usuarios..."
-            className="pl-10"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && loadUsuarios()}
-          />
-        </div>
-        <Button variant="secondary" onClick={loadUsuarios}>Buscar</Button>
+      {/* Search */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Buscar por nombre o email..."
+          className="pl-10"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
       </div>
 
+      {/* Form */}
+      {showForm && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardTitle className="text-lg">{editingId ? 'Editar Usuario' : 'Nuevo Usuario'}</CardTitle>
+            <Button variant="ghost" size="icon" onClick={resetForm}><X className="h-4 w-4" /></Button>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
+              {!editingId && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Email</Label>
+                    <Input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Contraseña</Label>
+                    <Input type="password" required minLength={6} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+                  </div>
+                </>
+              )}
+              <div className="space-y-2">
+                <Label>Nombre</Label>
+                <Input required value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Apellido</Label>
+                <Input required value={form.apellido} onChange={(e) => setForm({ ...form, apellido: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Teléfono</Label>
+                <Input value={form.telefono} onChange={(e) => setForm({ ...form, telefono: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Área</Label>
+                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={form.areaId} onChange={(e) => setForm({ ...form, areaId: e.target.value })}>
+                  <option value="">Sin área</option>
+                  {areas.map((a: any) => <option key={a.value} value={a.value}>{a.label}</option>)}
+                </select>
+              </div>
+              {!editingId && (
+                <div className="space-y-2">
+                  <Label>Rol</Label>
+                  <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={form.rolId} onChange={(e) => setForm({ ...form, rolId: e.target.value })}>
+                    <option value="">Sin rol</option>
+                    {roles.map((r: any) => <option key={r.value} value={r.value}>{r.label}</option>)}
+                  </select>
+                </div>
+              )}
+              <div className="md:col-span-2 flex gap-2">
+                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                  {(createMutation.isPending || updateMutation.isPending) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  {editingId ? 'Actualizar' : 'Crear'}
+                </Button>
+                <Button type="button" variant="outline" onClick={resetForm}>Cancelar</Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>Lista de Usuarios</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="text-center py-4">Cargando...</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-3">Nombre</th>
-                    <th className="text-left p-3">Email</th>
-                    <th className="text-left p-3">Rol</th>
-                    <th className="text-left p-3">Área</th>
-                    <th className="text-left p-3">Estado</th>
-                    <th className="text-right p-3">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {usuarios.map((usuario) => (
-                    <tr key={usuario.id} className="border-b hover:bg-gray-50">
-                      <td className="p-3">{usuario.nombreCompleto}</td>
-                      <td className="p-3">{usuario.email}</td>
-                      <td className="p-3 capitalize">{usuario.rol}</td>
-                      <td className="p-3">{usuario.areaNombre || '-'}</td>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Nombre</th>
+                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Email</th>
+                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Área</th>
+                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Roles</th>
+                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Estado</th>
+                  <th className="text-right p-3 text-sm font-medium text-muted-foreground">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr><td colSpan={6} className="p-8 text-center text-muted-foreground"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></td></tr>
+                ) : usuarios.length === 0 ? (
+                  <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No hay usuarios</td></tr>
+                ) : (
+                  usuarios.map((user: any) => (
+                    <tr key={user.id} className="border-b hover:bg-muted/30 transition-colors">
                       <td className="p-3">
-                        <span className={`px-2 py-1 rounded text-xs ${usuario.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                          {usuario.activo ? 'Activo' : 'Inactivo'}
-                        </span>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
+                            {user.nombre?.charAt(0)}{user.apellido?.charAt(0)}
+                          </div>
+                          <span className="font-medium">{user.nombre} {user.apellido}</span>
+                        </div>
+                      </td>
+                      <td className="p-3 text-sm text-muted-foreground">{user.email}</td>
+                      <td className="p-3 text-sm">{user.area?.nombre || '-'}</td>
+                      <td className="p-3 text-sm">{user.roles?.join(', ') || '-'}</td>
+                      <td className="p-3">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          user.estado === 'activo' ? 'bg-green-100 text-green-700' :
+                          user.estado === 'inactivo' ? 'bg-gray-100 text-gray-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>{user.estado}</span>
                       </td>
                       <td className="p-3 text-right">
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => handleDelete(usuario.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => handleEdit(user)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => { if (confirm('¿Eliminar este usuario?')) deleteMutation.mutate(user.id) }}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
     </div>

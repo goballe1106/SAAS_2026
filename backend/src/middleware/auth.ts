@@ -1,16 +1,30 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
+import { FastifyRequest, FastifyReply } from 'fastify'
 
-export async function authMiddleware(request: FastifyRequest, reply: FastifyReply) {
-  const publicPaths = ['/health', '/docs', '/docs/', '/api/v1/auth/login', '/api/v1/auth/register', '/api/v1/auth/refresh'];
-  const isPublicPath = publicPaths.some(path => request.url.startsWith(path));
-  if (isPublicPath) return;
-
+export async function authGuard(request: FastifyRequest, reply: FastifyReply) {
   try {
-    const authHeader = request.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return reply.status(401).send({ success: false, error: { code: 'UNAUTHORIZED', message: 'No se proporcionó token' } });
+    await request.jwtVerify()
+  } catch (err) {
+    reply.status(401).send({
+      success: false,
+      error: { code: 'UNAUTHORIZED', message: 'Token inválido o expirado' },
+    })
+  }
+}
+
+export async function adminGuard(request: FastifyRequest, reply: FastifyReply) {
+  try {
+    await request.jwtVerify()
+    const user = request.user as any
+    if (!user.roles || !user.roles.includes('Administrador')) {
+      reply.status(403).send({
+        success: false,
+        error: { code: 'FORBIDDEN', message: 'Se requiere rol de Administrador' },
+      })
     }
-  } catch (error) {
-    return reply.status(401).send({ success: false, error: { code: 'UNAUTHORIZED', message: 'Token inválido' } });
+  } catch (err) {
+    reply.status(401).send({
+      success: false,
+      error: { code: 'UNAUTHORIZED', message: 'Token inválido o expirado' },
+    })
   }
 }

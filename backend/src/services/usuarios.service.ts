@@ -1,83 +1,213 @@
-import bcrypt from 'bcrypt';
-import { db } from '../config/database.js';
-import { usuarios, areas } from '../drizzle/schema/index.js';
-import { eq, and, or, like, asc, desc, sql } from 'drizzle-orm';
+import { eq, ilike, and, sql, desc } from 'drizzle-orm'
+import bcrypt from 'bcrypt'
+import { db } from '../config/database'
+import { usuarios, usuariosRoles, roles, auditoriaLogs } from '../drizzle/schema'
 
-class UsuariosService {
-  async findAll(filters: any = {}) {
-    const page = filters.page || 1;
-    const limit = filters.limit || 20;
-    const offset = (page - 1) * limit;
-
-    const conditions: any[] = [];
-    if (filters.search) {
-      conditions.push(or(like(usuarios.nombreCompleto, `%${filters.search}%`), like(usuarios.email, `%${filters.search}%`)));
-    }
-    if (filters.rol) conditions.push(eq(usuarios.rol, filters.rol));
-    if (filters.areaId) conditions.push(eq(usuarios.areaId, filters.areaId));
-    if (filters.activo !== undefined) conditions.push(eq(usuarios.activo, filters.activo));
-
-    const totalResult = await db.select({ id: usuarios.id }).from(usuarios).where(conditions.length > 0 ? and(...conditions) : undefined);
-    const total = totalResult.length;
-
-    const users = await db.select()
-      .from(usuarios)
-      .leftJoin(areas, eq(usuarios.areaId, areas.id))
-      .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .limit(limit)
-      .offset(offset);
-
-    const data = users.map((u: any) => ({
-      id: u.usuarios.id,
-      email: u.usuarios.email,
-      nombreCompleto: u.usuarios.nombreCompleto,
-      telefono: u.usuarios.telefono,
-      rol: u.usuarios.rol,
-      areaId: u.usuarios.areaId,
-      areaNombre: u.areas?.nombre,
-      activo: u.usuarios.activo,
-      createdAt: u.usuarios.createdAt,
-    }));
-
-    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
-  }
-
-  async findById(id: string) {
-    const result = await db.select().from(usuarios).leftJoin(areas, eq(usuarios.areaId, areas.id)).where(eq(usuarios.id, id)).limit(1);
-    if (result.length === 0) return null;
-    const u = result[0];
-    return {
-      id: u.usuarios.id, email: u.usuarios.email, nombreCompleto: u.usuarios.nombreCompleto,
-      telefono: u.usuarios.telefono, rol: u.usuarios.rol, areaId: u.usuarios.areaId,
-      areaNombre: u.areas?.nombre, activo: u.usuarios.activo, createdAt: u.usuarios.createdAt,
-    };
-  }
-
-  async create(data: any) {
-    const existing = await db.select().from(usuarios).where(eq(usuarios.email, data.email)).limit(1);
-    if (existing.length > 0) throw new Error('El correo electrónico ya está registrado');
-    const passwordHash = await bcrypt.hash(data.password, 12);
-    const nuevoUsuario: any = {
-      email: data.email, passwordHash, nombreCompleto: data.nombreCompleto,
-      telefono: data.telefono || null, rol: data.rol || 'empleado',
-      areaId: data.areaId || null, activo: data.activo !== undefined ? data.activo : true,
-      idioma: 'es', zonaHoraria: 'America/Lima',
-    };
-    const result = await db.insert(usuarios).values(nuevoUsuario).returning();
-    return this.findById(result[0].id);
-  }
-
-  async update(id: string, data: any) {
-    const updateData: any = { ...data, updatedAt: new Date() };
-    delete updateData.password;
-    await db.update(usuarios).set(updateData).where(eq(usuarios.id, id));
-    return this.findById(id);
-  }
-
-  async delete(id: string) {
-    await db.update(usuarios).set({ activo: false, deletedAt: new Date(), updatedAt: new Date() }).where(eq(usuarios.id, id));
-    return { success: true };
-  }
+interface CreateUsuarioInput {
+  email: string
+  password: string
+  nombre: string
+  apellido: string
+  telefono?: string
+  areaId?: string
+  rolId?: string
 }
 
-export const usuariosService = new UsuariosService();
+interface UpdateUsuarioInput {
+  nombre?: string
+  apellido?: string
+  telefono?: string
+  areaId?: string | null
+  estado?: 'activo' | 'inactivo' | 'bloqueado'
+}
+
+interface ListParams {
+  page?: number
+  perPage?: number
+  search?: string
+  estado?: string
+  areaId?: string
+}
+
+export class UsuariosService {
+  static async list(params: ListParams) {
+    const page = params.page || 1
+    const perPage = params.perPage || 20
+    const offset = (page - 1) * perPage
+
+    const conditions = []
+
+    if (params.search) {
+      conditions.push(
+        sql`(${usuarios.nombre} ILIKE ${`%${params.search}%`} OR ${usuarios.apellido} ILIKE ${`%${params.search}%`} OR ${usuarios.email} ILIKE ${`%${params.search}%`})`
+      )
+    }
+
+    if (params.estado) {
+      conditions.push(eq(usuarios.estado, params.estado as any))
+    }
+
+    if (params.areaId) {
+      conditions.push(eq(usuarios.areaId, params.areaId))
+    }
+
+    const where = conditions.length > 0 ? and(...conditions) : undefined
+
+    const [data, countResult] = await Promise.all([
+      db.query.usuarios.findMany({
+        where,
+        with: {
+          area: true,
+          usuariosRoles: {
+            with: { rol: true },
+          },
+        },
+        limit: perPage,
+        offset,
+        orderBy: [desc(usuarios.createdAt)],
+        columns: {
+          password: false,
+        },
+      }),
+      db.select({ count: sql<number>`count(*)` })
+        .from(usuarios)
+        .where(where),
+    ])
+
+    const total = Number(countResult[0].count)
+
+    return {
+      data: data.map((u: any) => ({
+        ...u,
+        roles: u.usuariosRoles.map((ur: any) => ur.rol.nombre),
+      })),
+      meta: {
+        page,
+        per_page: perPage,
+        total,
+        total_pages: Math.ceil(total / perPage),
+      },
+    }
+  }
+
+  static async getById(id: string) {
+    const user = await db.query.usuarios.findFirst({
+      where: eq(usuarios.id, id),
+      with: {
+        area: true,
+        usuariosRoles: {
+          with: { rol: true, area: true },
+        },
+      },
+      columns: {
+        password: false,
+      },
+    })
+
+    if (!user) {
+      throw { statusCode: 404, message: 'Usuario no encontrado' }
+    }
+
+    return {
+      ...user,
+      roles: user.usuariosRoles.map((ur: any) => ({
+        id: ur.rol.id,
+        nombre: ur.rol.nombre,
+        nivel: ur.rol.nivel,
+        area: ur.area?.nombre || null,
+      })),
+    }
+  }
+
+  static async create(input: CreateUsuarioInput, createdBy?: string) {
+    const existing = await db.query.usuarios.findFirst({
+      where: eq(usuarios.email, input.email),
+    })
+
+    if (existing) {
+      throw { statusCode: 409, message: 'Ya existe un usuario con ese email' }
+    }
+
+    const hashedPassword = await bcrypt.hash(input.password, 12)
+
+    const [user] = await db.insert(usuarios).values({
+      email: input.email,
+      password: hashedPassword,
+      nombre: input.nombre,
+      apellido: input.apellido,
+      telefono: input.telefono,
+      areaId: input.areaId,
+    }).returning()
+
+    if (input.rolId) {
+      await db.insert(usuariosRoles).values({
+        usuarioId: user.id,
+        rolId: input.rolId,
+      })
+    }
+
+    if (createdBy) {
+      await db.insert(auditoriaLogs).values({
+        usuarioId: createdBy,
+        accion: 'CREATE',
+        modulo: 'usuarios',
+        registroId: user.id,
+        datosNuevos: { email: user.email, nombre: user.nombre, apellido: user.apellido },
+      })
+    }
+
+    return this.getById(user.id)
+  }
+
+  static async update(id: string, input: UpdateUsuarioInput, updatedBy?: string) {
+    const existing = await db.query.usuarios.findFirst({
+      where: eq(usuarios.id, id),
+    })
+
+    if (!existing) {
+      throw { statusCode: 404, message: 'Usuario no encontrado' }
+    }
+
+    const [updated] = await db.update(usuarios)
+      .set({ ...input, updatedAt: new Date() })
+      .where(eq(usuarios.id, id))
+      .returning()
+
+    if (updatedBy) {
+      await db.insert(auditoriaLogs).values({
+        usuarioId: updatedBy,
+        accion: 'UPDATE',
+        modulo: 'usuarios',
+        registroId: id,
+        datosAnteriores: { nombre: existing.nombre, apellido: existing.apellido, estado: existing.estado },
+        datosNuevos: input,
+      })
+    }
+
+    return this.getById(updated.id)
+  }
+
+  static async delete(id: string, deletedBy?: string) {
+    const existing = await db.query.usuarios.findFirst({
+      where: eq(usuarios.id, id),
+    })
+
+    if (!existing) {
+      throw { statusCode: 404, message: 'Usuario no encontrado' }
+    }
+
+    await db.delete(usuarios).where(eq(usuarios.id, id))
+
+    if (deletedBy) {
+      await db.insert(auditoriaLogs).values({
+        usuarioId: deletedBy,
+        accion: 'DELETE',
+        modulo: 'usuarios',
+        registroId: id,
+        datosAnteriores: { email: existing.email, nombre: existing.nombre },
+      })
+    }
+
+    return { success: true, message: 'Usuario eliminado' }
+  }
+}

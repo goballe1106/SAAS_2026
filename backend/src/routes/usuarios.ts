@@ -1,50 +1,72 @@
-import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { usuariosService } from '../services/usuarios.service';
+import { FastifyInstance } from 'fastify'
+import { UsuariosService } from '../services/usuarios.service'
+import { authGuard, adminGuard } from '../middleware/auth'
+import { z } from 'zod'
+
+const createSchema = z.object({
+  email: z.string().email('Email inválido'),
+  password: z.string().min(6, 'Mínimo 6 caracteres'),
+  nombre: z.string().min(1, 'Nombre requerido'),
+  apellido: z.string().min(1, 'Apellido requerido'),
+  telefono: z.string().optional(),
+  areaId: z.string().uuid().optional(),
+  rolId: z.string().uuid().optional(),
+})
+
+const updateSchema = z.object({
+  nombre: z.string().min(1).optional(),
+  apellido: z.string().min(1).optional(),
+  telefono: z.string().optional(),
+  areaId: z.string().uuid().nullable().optional(),
+  estado: z.enum(['activo', 'inactivo', 'bloqueado']).optional(),
+})
 
 export async function usuariosRoutes(fastify: FastifyInstance) {
+  fastify.addHook('preHandler', authGuard)
+
+  // GET /api/v1/usuarios
   fastify.get('/', async (request, reply) => {
-    try {
-      const filters = request.query as any;
-      const result = await usuariosService.findAll(filters);
-      return reply.send({ success: true, data: result.data, meta: result.meta });
-    } catch (error) { throw error; }
-  });
+    const query = request.query as any
+    const result = await UsuariosService.list({
+      page: Number(query.page) || 1,
+      perPage: Number(query.per_page) || 20,
+      search: query.search,
+      estado: query.estado,
+      areaId: query.area_id,
+    })
+    return { success: true, ...result }
+  })
 
+  // GET /api/v1/usuarios/:id
   fastify.get('/:id', async (request, reply) => {
-    try {
-      const { id } = request.params as any;
-      const user = await usuariosService.findById(id);
-      if (!user) return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND' } });
-      return reply.send({ success: true, data: user });
-    } catch (error) { throw error; }
-  });
+    const { id } = request.params as any
+    const user = await UsuariosService.getById(id)
+    return { success: true, data: user }
+  })
 
-  fastify.post('/', async (request, reply) => {
-    try {
-      const body = request.body as any;
-      const user = await usuariosService.create(body);
-      return reply.status(201).send({ success: true, data: user });
-    } catch (error: any) {
-      return reply.status(400).send({ success: false, error: { message: error.message } });
-    }
-  });
+  // POST /api/v1/usuarios
+  fastify.post('/', { preHandler: [adminGuard] }, async (request, reply) => {
+    const body = createSchema.parse(request.body)
+    const currentUser = request.user as any
+    const user = await UsuariosService.create(body, currentUser.id)
+    reply.status(201)
+    return { success: true, data: user }
+  })
 
-  fastify.put('/:id', async (request, reply) => {
-    try {
-      const { id } = request.params as any;
-      const body = request.body as any;
-      const user = await usuariosService.update(id, body);
-      return reply.send({ success: true, data: user });
-    } catch (error: any) {
-      return reply.status(400).send({ success: false, error: { message: error.message } });
-    }
-  });
+  // PUT /api/v1/usuarios/:id
+  fastify.put('/:id', { preHandler: [adminGuard] }, async (request, reply) => {
+    const { id } = request.params as any
+    const body = updateSchema.parse(request.body)
+    const currentUser = request.user as any
+    const user = await UsuariosService.update(id, body, currentUser.id)
+    return { success: true, data: user }
+  })
 
-  fastify.delete('/:id', async (request, reply) => {
-    try {
-      const { id } = request.params as any;
-      await usuariosService.delete(id);
-      return reply.send({ success: true, message: 'Usuario eliminado correctamente' });
-    } catch (error) { throw error; }
-  });
+  // DELETE /api/v1/usuarios/:id
+  fastify.delete('/:id', { preHandler: [adminGuard] }, async (request, reply) => {
+    const { id } = request.params as any
+    const currentUser = request.user as any
+    const result = await UsuariosService.delete(id, currentUser.id)
+    return { success: true, data: result }
+  })
 }

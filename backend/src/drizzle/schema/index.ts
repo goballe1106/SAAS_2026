@@ -1,102 +1,206 @@
-import { pgTable, uuid, varchar, timestamp, boolean, text, integer, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, timestamp, boolean, integer, jsonb, pgEnum } from 'drizzle-orm/pg-core'
+import { relations } from 'drizzle-orm'
 
-export const rolEnum = pgEnum('rol', ['admin', 'gerente', 'supervisor', 'empleado', 'contador']);
-export const estadoEnum = pgEnum('estado', ['activo', 'inactivo', 'suspendido']);
-export const tipoAreaEnum = pgEnum('tipo_area', ['empresa', 'direccion', 'departamento', 'area', 'proyecto']);
+// ============================================================
+// ENUMS
+// ============================================================
 
-export const usuarios = pgTable('usuarios', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  email: varchar('email', { length: 100 }).notNull().unique(),
-  passwordHash: varchar('password_hash', { length: 255 }).notNull(),
-  nombreCompleto: varchar('nombre_completo', { length: 150 }).notNull(),
-  telefono: varchar('telefono', { length: 20 }),
-  whatsapp: varchar('whatsapp', { length: 20 }),
-  telegram: varchar('telegram', { length: 20 }),
-  fotoUrl: varchar('foto_url', { length: 500 }),
-  rol: rolEnum('rol').notNull().default('empleado'),
-  areaId: uuid('area_id'),
-  activo: boolean('activo').notNull().default(true),
-  debeCambiarPassword: boolean('debe_cambiar_password').notNull().default(false),
-  ultimoLogin: timestamp('ultimo_login'),
-  intentosLogin: integer('intentos_login').notNull().default(0),
-  bloqueadoHasta: timestamp('bloqueado_hasta'),
-  idioma: varchar('idioma', { length: 10 }).notNull().default('es'),
-  zonaHoraria: varchar('zona_horaria', { length: 50 }).notNull().default('America/Lima'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at'),
-  deletedAt: timestamp('deleted_at'),
-});
+export const estadoUsuarioEnum = pgEnum('estado_usuario', ['activo', 'inactivo', 'bloqueado'])
+export const nivelRolEnum = pgEnum('nivel_rol', ['admin', 'gerente', 'supervisor', 'empleado', 'contador'])
+export const accionAuditoriaEnum = pgEnum('accion_auditoria', ['CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'EXPORT'])
+
+// ============================================================
+// CORE: AREAS (organizational units, self-referencing hierarchy)
+// ============================================================
+
+export const areas = pgTable('areas', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  nombre: varchar('nombre', { length: 100 }).notNull(),
+  codigo: varchar('codigo', { length: 20 }).unique(),
+  descripcion: text('descripcion'),
+  padreId: uuid('padre_id').references((): any => areas.id, { onDelete: 'set null' }),
+  responsableId: uuid('responsable_id'),
+  activo: boolean('activo').default(true).notNull(),
+  orden: integer('orden').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+// ============================================================
+// CORE: ROLES
+// ============================================================
 
 export const roles = pgTable('roles', {
-  id: uuid('id').defaultRandom().primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   nombre: varchar('nombre', { length: 50 }).notNull().unique(),
   descripcion: text('descripcion'),
-  nivel: integer('nivel').notNull().default(0),
-  activo: boolean('activo').notNull().default(true),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at'),
-});
+  nivel: nivelRolEnum('nivel').notNull(),
+  activo: boolean('activo').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+// ============================================================
+// CORE: PERMISOS
+// ============================================================
 
 export const permisos = pgTable('permisos', {
-  id: uuid('id').defaultRandom().primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   modulo: varchar('modulo', { length: 50 }).notNull(),
   accion: varchar('accion', { length: 50 }).notNull(),
   descripcion: text('descripcion'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-});
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})
+
+// ============================================================
+// CORE: ROLES_PERMISOS (many-to-many)
+// ============================================================
 
 export const rolesPermisos = pgTable('roles_permisos', {
-  id: uuid('id').defaultRandom().primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   rolId: uuid('rol_id').notNull().references(() => roles.id, { onDelete: 'cascade' }),
   permisoId: uuid('permiso_id').notNull().references(() => permisos.id, { onDelete: 'cascade' }),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-});
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})
 
-export const areas = pgTable('areas', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  codigo: varchar('codigo', { length: 20 }).notNull().unique(),
+// ============================================================
+// CORE: USUARIOS
+// ============================================================
+
+export const usuarios = pgTable('usuarios', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  password: varchar('password', { length: 255 }).notNull(),
   nombre: varchar('nombre', { length: 100 }).notNull(),
-  descripcion: text('descripcion'),
-  imagenUrl: varchar('imagen_url', { length: 500 }),
-  padreId: uuid('padre_id'),
-  gerenteId: uuid('gerente_id'),
-  presupuesto: integer('presupuesto'),
-  tipo: tipoAreaEnum('tipo').notNull().default('area'),
-  activo: boolean('activo').notNull().default(true),
-  orden: integer('orden').notNull().default(0),
-  color: varchar('color', { length: 7 }),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at'),
-});
+  apellido: varchar('apellido', { length: 100 }).notNull(),
+  telefono: varchar('telefono', { length: 20 }),
+  avatar: varchar('avatar', { length: 500 }),
+  areaId: uuid('area_id').references(() => areas.id, { onDelete: 'set null' }),
+  estado: estadoUsuarioEnum('estado').default('activo').notNull(),
+  ultimoLogin: timestamp('ultimo_login'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+// ============================================================
+// CORE: USUARIOS_ROLES (user-role-area mapping)
+// ============================================================
 
 export const usuariosRoles = pgTable('usuarios_roles', {
-  id: uuid('id').defaultRandom().primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   usuarioId: uuid('usuario_id').notNull().references(() => usuarios.id, { onDelete: 'cascade' }),
   rolId: uuid('rol_id').notNull().references(() => roles.id, { onDelete: 'cascade' }),
   areaId: uuid('area_id').references(() => areas.id, { onDelete: 'set null' }),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-});
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})
 
-export const tokensSesion = pgTable('tokens_sesion', {
-  id: uuid('id').defaultRandom().primaryKey(),
+// ============================================================
+// AUTH: TOKENS_SESION
+// ============================================================
+
+export const tokenesSesion = pgTable('tokens_sesion', {
+  id: uuid('id').primaryKey().defaultRandom(),
   usuarioId: uuid('usuario_id').notNull().references(() => usuarios.id, { onDelete: 'cascade' }),
-  token: varchar('token', { length: 500 }).notNull(),
-  tipo: varchar('tipo', { length: 20 }).notNull().default('access'),
+  refreshToken: text('refresh_token').notNull(),
+  userAgent: text('user_agent'),
   ipAddress: varchar('ip_address', { length: 45 }),
-  userAgent: varchar('user_agent', { length: 500 }),
   expiresAt: timestamp('expires_at').notNull(),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  revokedAt: timestamp('revoked_at'),
-});
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})
+
+// ============================================================
+// SYSTEM: AUDITORIA_LOGS
+// ============================================================
+
+export const auditoriaLogs = pgTable('auditoria_logs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  usuarioId: uuid('usuario_id').references(() => usuarios.id, { onDelete: 'set null' }),
+  accion: accionAuditoriaEnum('accion').notNull(),
+  modulo: varchar('modulo', { length: 50 }).notNull(),
+  registroId: uuid('registro_id'),
+  datosAnteriores: jsonb('datos_anteriores'),
+  datosNuevos: jsonb('datos_nuevos'),
+  ipAddress: varchar('ip_address', { length: 45 }),
+  userAgent: text('user_agent'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})
+
+// ============================================================
+// SYSTEM: NOTIFICACIONES
+// ============================================================
+
+export const notificaciones = pgTable('notificaciones', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  usuarioId: uuid('usuario_id').notNull().references(() => usuarios.id, { onDelete: 'cascade' }),
+  titulo: varchar('titulo', { length: 200 }).notNull(),
+  mensaje: text('mensaje').notNull(),
+  tipo: varchar('tipo', { length: 50 }).default('info').notNull(),
+  leida: boolean('leida').default(false).notNull(),
+  enlace: varchar('enlace', { length: 500 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})
+
+// ============================================================
+// SYSTEM: CONFIGURACIONES
+// ============================================================
 
 export const configuraciones = pgTable('configuraciones', {
-  id: uuid('id').defaultRandom().primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   clave: varchar('clave', { length: 100 }).notNull().unique(),
   valor: text('valor'),
   descripcion: text('descripcion'),
-  tipo: varchar('tipo', { length: 20 }).notNull().default('string'),
-  modulo: varchar('modulo', { length: 50 }),
-  editable: boolean('editable').notNull().default(true),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at'),
-});
+  tipo: varchar('tipo', { length: 20 }).default('string').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+// ============================================================
+// RELATIONS
+// ============================================================
+
+export const areasRelations = relations(areas, ({ one, many }) => ({
+  padre: one(areas, { fields: [areas.padreId], references: [areas.id], relationName: 'areaHierarchy' }),
+  hijos: many(areas, { relationName: 'areaHierarchy' }),
+  usuarios: many(usuarios),
+  responsable: one(usuarios, { fields: [areas.responsableId], references: [usuarios.id], relationName: 'areaResponsable' }),
+}))
+
+export const rolesRelations = relations(roles, ({ many }) => ({
+  usuariosRoles: many(usuariosRoles),
+  rolesPermisos: many(rolesPermisos),
+}))
+
+export const permisosRelations = relations(permisos, ({ many }) => ({
+  rolesPermisos: many(rolesPermisos),
+}))
+
+export const rolesPermisosRelations = relations(rolesPermisos, ({ one }) => ({
+  rol: one(roles, { fields: [rolesPermisos.rolId], references: [roles.id] }),
+  permiso: one(permisos, { fields: [rolesPermisos.permisoId], references: [permisos.id] }),
+}))
+
+export const usuariosRelations = relations(usuarios, ({ one, many }) => ({
+  area: one(areas, { fields: [usuarios.areaId], references: [areas.id] }),
+  usuariosRoles: many(usuariosRoles),
+  tokenesSesion: many(tokenesSesion),
+  notificaciones: many(notificaciones),
+  areasResponsable: many(areas, { relationName: 'areaResponsable' }),
+}))
+
+export const usuariosRolesRelations = relations(usuariosRoles, ({ one }) => ({
+  usuario: one(usuarios, { fields: [usuariosRoles.usuarioId], references: [usuarios.id] }),
+  rol: one(roles, { fields: [usuariosRoles.rolId], references: [roles.id] }),
+  area: one(areas, { fields: [usuariosRoles.areaId], references: [areas.id] }),
+}))
+
+export const tokenesSesionRelations = relations(tokenesSesion, ({ one }) => ({
+  usuario: one(usuarios, { fields: [tokenesSesion.usuarioId], references: [usuarios.id] }),
+}))
+
+export const auditoriaLogsRelations = relations(auditoriaLogs, ({ one }) => ({
+  usuario: one(usuarios, { fields: [auditoriaLogs.usuarioId], references: [usuarios.id] }),
+}))
+
+export const notificacionesRelations = relations(notificaciones, ({ one }) => ({
+  usuario: one(usuarios, { fields: [notificaciones.usuarioId], references: [usuarios.id] }),
+}))

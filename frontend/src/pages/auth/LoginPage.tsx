@@ -1,83 +1,90 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuthStore } from '@/stores/authStore'
-import { authService } from '@/services/api'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useAuthStore } from '../../stores/authStore'
+import { Button } from '../../components/ui/button'
+import { Input } from '../../components/ui/input'
+import { Label } from '../../components/ui/label'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
+import { Building2, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [email, setEmail] = useState('admin@erp.com')
+  const [password, setPassword] = useState('Admin123!')
   const navigate = useNavigate()
-  const login = useAuthStore((state) => state.login)
+  const { login, isLoading, error, clearError } = useAuthStore()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
-    setLoading(true)
-
+    clearError()
     try {
-      const response = await authService.login(email, password)
-      if (response.success) {
-        login(response.data.user, response.data.accessToken, response.data.refreshToken)
-        localStorage.setItem('token', response.data.accessToken)
-        navigate('/')
-      } else {
-        setError(response.error.message || 'Error al iniciar sesión')
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.error?.message || 'Error de conexión')
-    } finally {
-      setLoading(false)
+      await login(email, password)
+      navigate('/')
+    } catch {
+      // error is set in store
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl text-center">ERP SAS</CardTitle>
-          <CardDescription className="text-center">
-            Ingresa tus credenciales para acceder
-          </CardDescription>
+        <CardHeader className="text-center space-y-4">
+          <div className="mx-auto w-16 h-16 bg-primary rounded-2xl flex items-center justify-center">
+            <Building2 className="h-8 w-8 text-white" />
+          </div>
+          <div>
+            <CardTitle className="text-2xl">ERP SAS</CardTitle>
+            <CardDescription>Ingresa tus credenciales para acceder</CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
+          {error && (
+            <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Email</label>
+              <Label htmlFor="email">Email</Label>
               <Input
+                id="email"
                 type="email"
-                placeholder="admin@erp.com"
+                placeholder="correo@empresa.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
+
             <div className="space-y-2">
-              <label className="text-sm font-medium">Contraseña</label>
+              <Label htmlFor="password">Contraseña</Label>
               <Input
+                id="password"
                 type="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Ingresando...' : 'Iniciar Sesión'}
+
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Iniciando sesión...
+                </>
+              ) : (
+                'Iniciar Sesión'
+              )}
             </Button>
           </form>
-          <div className="mt-4 text-center text-sm text-gray-500">
+
+          <p className="text-center text-xs text-muted-foreground mt-4">
             Credenciales: admin@erp.com / Admin123!
-          </div>
+          </p>
         </CardContent>
       </Card>
     </div>

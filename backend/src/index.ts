@@ -1,73 +1,90 @@
-import Fastify from 'fastify';
-import cors from '@fastify/cors';
-import helmet from '@fastify/helmet';
-import rateLimit from '@fastify/rate-limit';
-import swagger from '@fastify/swagger';
-import swaggerUi from '@fastify/swagger-ui';
-import 'dotenv/config';
-import { authRoutes } from './routes/auth';
-import { usuariosRoutes } from './routes/usuarios';
-import { areasRoutes } from './routes/areas';
-import { rolesRoutes } from './routes/roles';
-import { dashboardRoutes } from './routes/dashboard';
-import { errorHandler } from './middleware/error';
-import { authMiddleware } from './middleware/auth';
+import 'dotenv/config'
+import Fastify from 'fastify'
+import cors from '@fastify/cors'
+import helmet from '@fastify/helmet'
+import jwt from '@fastify/jwt'
+import rateLimit from '@fastify/rate-limit'
+import swagger from '@fastify/swagger'
+import swaggerUi from '@fastify/swagger-ui'
+import { errorHandler } from './middleware/error'
+import { authRoutes } from './routes/auth'
+import { usuariosRoutes } from './routes/usuarios'
+import { areasRoutes } from './routes/areas'
+import { rolesRoutes } from './routes/roles'
+import { dashboardRoutes } from './routes/dashboard'
 
-const fastify = Fastify({
-  logger: {
-    level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
-  },
-});
+const PORT = Number(process.env.API_PORT || process.env.PORT || 3001)
+const HOST = '0.0.0.0'
 
-async function start() {
-  // Helmet
-  await fastify.register(helmet, {
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", 'data:', 'blob:'],
-      },
+async function buildServer() {
+  const fastify = Fastify({
+    logger: {
+      level: process.env.NODE_ENV === 'production' ? 'warn' : 'info',
     },
-  });
+    trustProxy: true,
+  })
+
+  // Error handler
+  fastify.setErrorHandler(errorHandler)
+
+  // Zod validation error handler
+  fastify.addHook('onError', async (request, reply, error: any) => {
+    if (error.name === 'ZodError') {
+      reply.status(400).send({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Datos de entrada inválidos',
+          details: error.errors,
+        },
+      })
+    }
+  })
 
   // CORS
-  await fastify.register(cors, {
-    origin: [
-      'http://localhost:5173',
-      'http://192.168.1.43:5173',
-      process.env.APP_URL || '',
-    ].filter(Boolean),
-    credentials: true,
-  });
+  const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    process.env.APP_URL,
+  ].filter(Boolean) as string[]
 
-  // Rate Limiting
+  await fastify.register(cors, {
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
+        cb(null, true)
+      } else {
+        cb(null, false)
+      }
+    },
+    credentials: true,
+  })
+
+  // Helmet
+  await fastify.register(helmet, {
+    contentSecurityPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+
+  // JWT
+  await fastify.register(jwt, {
+    secret: process.env.JWT_SECRET || 'default-dev-secret-change-me',
+  })
+
+  // Rate limit
   await fastify.register(rateLimit, {
     max: 100,
     timeWindow: '1 minute',
-    errorResponseBuilder: () => ({
-      success: false,
-      error: {
-        code: 'RATE_LIMIT_EXCEEDED',
-        message: 'Too many requests',
-      },
-    }),
-  });
+  })
 
-  // Swagger
+  // Swagger docs
   await fastify.register(swagger, {
     openapi: {
       info: {
         title: 'ERP SAS API',
-        description: 'API REST para el Sistema de Gestión Empresarial ERP SAS',
+        description: 'Sistema de Gestión Empresarial - API REST',
         version: '1.0.0',
       },
-      servers: [
-        {
-          url: process.env.API_URL || 'http://localhost:3001',
-          description: 'Development server',
-        },
-      ],
+      servers: [{ url: `http://localhost:${PORT}` }],
       components: {
         securitySchemes: {
           bearerAuth: {
@@ -78,59 +95,50 @@ async function start() {
         },
       },
     },
-  });
+  })
 
   await fastify.register(swaggerUi, {
     routePrefix: '/docs',
-  });
+  })
 
   // Health check
-  fastify.get('/health', async () => {
-    return { 
-      status: 'ok', 
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-    };
-  });
+  fastify.get('/health', async () => ({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  }))
 
-  // Rutas públicas
-  fastify.register(authRoutes, { prefix: '/api/v1/auth' });
+  // API Routes
+  await fastify.register(authRoutes, { prefix: '/api/v1/auth' })
+  await fastify.register(usuariosRoutes, { prefix: '/api/v1/usuarios' })
+  await fastify.register(areasRoutes, { prefix: '/api/v1/areas' })
+  await fastify.register(rolesRoutes, { prefix: '/api/v1/roles' })
+  await fastify.register(dashboardRoutes, { prefix: '/api/v1/dashboard' })
 
-  // Rutas protegidas
-  fastify.register(async function (fastify) {
-    fastify.addHook('onRequest', async (request, reply) => {
-      await authMiddleware(request, reply);
-    });
+  return fastify
+}
 
-    fastify.register(usuariosRoutes, { prefix: '/api/v1/usuarios' });
-    fastify.register(areasRoutes, { prefix: '/api/v1/areas' });
-    fastify.register(rolesRoutes, { prefix: '/api/v1/roles' });
-    fastify.register(dashboardRoutes, { prefix: '/api/v1/dashboard' });
-  });
+async function start() {
+  try {
+    const fastify = await buildServer()
 
-  // Manejo de errores
-  fastify.setErrorHandler(errorHandler);
+    await fastify.listen({ port: PORT, host: HOST })
 
-  // Iniciar servidor
-  const port = parseInt(process.env.API_PORT || '3001');
-  const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : '0.0.0.0';
-  
-  await fastify.listen({ port, host });
-  
-  console.log(`
+    console.log(`
 ╔═══════════════════════════════════════════════════════════════╗
 ║                                                               ║
 ║   🏢 ERP SAS API - Servidor iniciado                         ║
 ║                                                               ║
-║   📍 URL: http://localhost:${port}                              ║
-║   📖 Docs: http://localhost:${port}/docs                       ║
-║   🔧 Entorno: ${process.env.NODE_ENV || 'development'}                               ║
+║   📍 URL: http://${HOST}:${PORT}                              ║
+║   📖 Docs: http://localhost:${PORT}/docs                      ║
+║   🔧 Entorno: ${process.env.NODE_ENV || 'development'}       ║
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝
-  `);
+    `)
+  } catch (err) {
+    console.error('❌ Error starting server:', err)
+    process.exit(1)
+  }
 }
 
-start().catch((err) => {
-  console.error('Error al iniciar el servidor:', err);
-  process.exit(1);
-});
+start()

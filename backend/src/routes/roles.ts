@@ -1,59 +1,40 @@
-import { FastifyInstance } from 'fastify';
-import { db } from '../config/database.js';
-import { roles, permisos, rolesPermisos } from '../drizzle/schema/index.js';
-import { eq } from 'drizzle-orm';
+import { FastifyInstance } from 'fastify'
+import { eq, asc } from 'drizzle-orm'
+import { db } from '../config/database'
+import { roles, rolesPermisos, permisos } from '../drizzle/schema'
+import { authGuard } from '../middleware/auth'
 
 export async function rolesRoutes(fastify: FastifyInstance) {
+  fastify.addHook('preHandler', authGuard)
+
+  // GET /api/v1/roles
   fastify.get('/', async (request, reply) => {
-    try {
-      const result = await db.select().from(roles).orderBy(roles.nivel);
-      return reply.send({ success: true, data: result });
-    } catch (error) { throw error; }
-  });
+    const data = await db.query.roles.findMany({
+      with: {
+        rolesPermisos: {
+          with: { permiso: true },
+        },
+      },
+      orderBy: [asc(roles.nombre)],
+    })
 
-  fastify.get('/permisos', async (request, reply) => {
-    try {
-      const result = await db.select().from(permisos);
-      return reply.send({ success: true, data: result });
-    } catch (error) { throw error; }
-  });
-
-  fastify.get('/:id', async (request, reply) => {
-    try {
-      const { id } = request.params as any;
-      const result = await db.select().from(roles).where(eq(roles.id, id)).limit(1);
-      if (result.length === 0) return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND' } });
-      return reply.send({ success: true, data: result[0] });
-    } catch (error) { throw error; }
-  });
-
-  fastify.post('/', async (request, reply) => {
-    try {
-      const body = request.body as any;
-      const result = await db.insert(roles).values(body).returning();
-      return reply.status(201).send({ success: true, data: result[0] });
-    } catch (error: any) {
-      return reply.status(400).send({ success: false, error: { message: error.message } });
+    return {
+      success: true,
+      data: data.map((r: any) => ({
+        ...r,
+        permisos: r.rolesPermisos.map((rp: any) => rp.permiso),
+      })),
     }
-  });
+  })
 
-  fastify.put('/:id', async (request, reply) => {
-    try {
-      const { id } = request.params as any;
-      const body = request.body as any;
-      const result = await db.update(roles).set({ ...body, updatedAt: new Date() }).where(eq(roles.id, id)).returning();
-      if (result.length === 0) return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND' } });
-      return reply.send({ success: true, data: result[0] });
-    } catch (error: any) {
-      return reply.status(400).send({ success: false, error: { message: error.message } });
-    }
-  });
+  // GET /api/v1/roles/options
+  fastify.get('/options', async (request, reply) => {
+    const data = await db.select({
+      value: roles.id,
+      label: roles.nombre,
+      nivel: roles.nivel,
+    }).from(roles).where(eq(roles.activo, true)).orderBy(asc(roles.nombre))
 
-  fastify.delete('/:id', async (request, reply) => {
-    try {
-      const { id } = request.params as any;
-      await db.update(roles).set({ activo: false, updatedAt: new Date() }).where(eq(roles.id, id));
-      return reply.send({ success: true, message: 'Rol eliminado correctamente' });
-    } catch (error) { throw error; }
-  });
+    return { success: true, data }
+  })
 }

@@ -9,7 +9,6 @@ services:
       POSTGRES_DB: erp_sas
     volumes:
       - erp_db_data:/var/lib/postgresql/data
-      - ./backend/drizzle/migrations:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U erp_sas -d erp_sas"]
       interval: 10s
@@ -35,53 +34,44 @@ services:
     container_name: erp_sas_api
     restart: unless-stopped
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 3001
-
       DB_HOST: db
       DB_PORT: 5432
       DB_USER: erp_sas
       DB_PASSWORD: ${DB_PASSWORD:-ErpSas2026!}
       DB_NAME: erp_sas
-
       REDIS_HOST: redis
       REDIS_PORT: 6379
-
-      JWT_SECRET: your-super-secret-jwt-key
-
-      APP_URL: http://192.168.1.43:5173
+      JWT_SECRET: ${JWT_SECRET:-ErpSAS2026SuperSecretKey!ChangeInProduction123}
+      APP_URL: ${APP_URL:-http://localhost}
       API_URL: http://api:3001
-
     ports:
       - "3001:3001"
-
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
-
     command: sh -c "npx drizzle-kit push && npm run dev"
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ""
     container_name: erp_sas_frontend
     restart: unless-stopped
     ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    command: npm run dev
+      - "80:80"
     depends_on:
       - api
 
 volumes:
   erp_db_data:
   erp_redis_data:
+
+networks:
+  dokploy-network:
+    external: true

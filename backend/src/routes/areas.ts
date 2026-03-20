@@ -1,66 +1,78 @@
-import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { areasService } from '../services/areas.service';
+import { FastifyInstance } from 'fastify'
+import { AreasService } from '../services/areas.service'
+import { authGuard, adminGuard } from '../middleware/auth'
+import { z } from 'zod'
+
+const createSchema = z.object({
+  nombre: z.string().min(1, 'Nombre requerido'),
+  codigo: z.string().max(20).optional(),
+  descripcion: z.string().optional(),
+  padreId: z.string().uuid().nullable().optional(),
+  responsableId: z.string().uuid().nullable().optional(),
+  orden: z.number().int().optional(),
+})
+
+const updateSchema = z.object({
+  nombre: z.string().min(1).optional(),
+  codigo: z.string().max(20).optional(),
+  descripcion: z.string().optional(),
+  padreId: z.string().uuid().nullable().optional(),
+  responsableId: z.string().uuid().nullable().optional(),
+  activo: z.boolean().optional(),
+  orden: z.number().int().optional(),
+})
 
 export async function areasRoutes(fastify: FastifyInstance) {
+  fastify.addHook('preHandler', authGuard)
+
+  // GET /api/v1/areas
   fastify.get('/', async (request, reply) => {
-    try {
-      const includeInactive = (request.query as any).includeInactive === 'true';
-      const areas = await areasService.findAll(includeInactive);
-      return reply.send({ success: true, data: areas });
-    } catch (error) { throw error; }
-  });
+    const data = await AreasService.list()
+    return { success: true, data }
+  })
 
+  // GET /api/v1/areas/tree
   fastify.get('/tree', async (request, reply) => {
-    try {
-      const tree = await areasService.findTree();
-      return reply.send({ success: true, data: tree });
-    } catch (error) { throw error; }
-  });
+    const data = await AreasService.getTree()
+    return { success: true, data }
+  })
 
+  // GET /api/v1/areas/options
   fastify.get('/options', async (request, reply) => {
-    try {
-      const options = await areasService.findOptions();
-      return reply.send({ success: true, data: options });
-    } catch (error) { throw error; }
-  });
+    const data = await AreasService.getOptions()
+    return { success: true, data }
+  })
 
+  // GET /api/v1/areas/:id
   fastify.get('/:id', async (request, reply) => {
-    try {
-      const { id } = request.params as any;
-      const area = await areasService.findById(id);
-      if (!area) return reply.status(404).send({ success: false, error: { code: 'NOT_FOUND' } });
-      return reply.send({ success: true, data: area });
-    } catch (error) { throw error; }
-  });
+    const { id } = request.params as any
+    const data = await AreasService.getById(id)
+    return { success: true, data }
+  })
 
-  fastify.post('/', async (request, reply) => {
-    try {
-      const body = request.body as any;
-      const area = await areasService.create(body);
-      return reply.status(201).send({ success: true, data: area });
-    } catch (error: any) {
-      return reply.status(400).send({ success: false, error: { message: error.message } });
-    }
-  });
+  // POST /api/v1/areas
+  fastify.post('/', { preHandler: [adminGuard] }, async (request, reply) => {
+    const body = createSchema.parse(request.body)
+    const currentUser = request.user as any
+    const data = await AreasService.create(body, currentUser.id)
+    reply.status(201)
+    return { success: true, data }
+  })
 
-  fastify.put('/:id', async (request, reply) => {
-    try {
-      const { id } = request.params as any;
-      const body = request.body as any;
-      const area = await areasService.update(id, body);
-      return reply.send({ success: true, data: area });
-    } catch (error: any) {
-      return reply.status(400).send({ success: false, error: { message: error.message } });
-    }
-  });
+  // PUT /api/v1/areas/:id
+  fastify.put('/:id', { preHandler: [adminGuard] }, async (request, reply) => {
+    const { id } = request.params as any
+    const body = updateSchema.parse(request.body)
+    const currentUser = request.user as any
+    const data = await AreasService.update(id, body, currentUser.id)
+    return { success: true, data }
+  })
 
-  fastify.delete('/:id', async (request, reply) => {
-    try {
-      const { id } = request.params as any;
-      await areasService.delete(id);
-      return reply.send({ success: true, message: 'Área eliminada correctamente' });
-    } catch (error: any) {
-      return reply.status(400).send({ success: false, error: { message: error.message } });
-    }
-  });
+  // DELETE /api/v1/areas/:id
+  fastify.delete('/:id', { preHandler: [adminGuard] }, async (request, reply) => {
+    const { id } = request.params as any
+    const currentUser = request.user as any
+    const data = await AreasService.delete(id, currentUser.id)
+    return { success: true, data }
+  })
 }
