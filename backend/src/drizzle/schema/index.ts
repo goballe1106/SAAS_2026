@@ -9,6 +9,13 @@ export const estadoUsuarioEnum = pgEnum('estado_usuario', ['activo', 'inactivo',
 export const nivelRolEnum = pgEnum('nivel_rol', ['admin', 'gerente', 'supervisor', 'empleado', 'contador'])
 export const accionAuditoriaEnum = pgEnum('accion_auditoria', ['CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'EXPORT'])
 
+// COMERCIAL MODULE ENUMS
+export const estadoClienteEnum = pgEnum('estado_cliente', ['prospecto', 'activo', 'inactivo', 'potencial'])
+export const tipoContactoEnum = pgEnum('tipo_contacto', ['principal', 'facturacion', 'tecnico', 'comercial'])
+export const etapaOportunidadEnum = pgEnum('etapa_oportunidad', ['contacto', 'calificacion', 'propuesta', 'negociacion', 'cerrado_ganado', 'cerrado_perdido'])
+export const tipoActividadEnum = pgEnum('tipo_actividad', ['llamada', 'reunion', 'email', 'visita', 'tarea', 'nota'])
+export const estadoCotizacionEnum = pgEnum('estado_cotizacion', ['borrador', 'enviada', 'aceptada', 'rechazada', 'convertida'])
+
 // ============================================================
 // CORE: AREAS (organizational units, self-referencing hierarchy)
 // ============================================================
@@ -203,4 +210,173 @@ export const auditoriaLogsRelations = relations(auditoriaLogs, ({ one }) => ({
 
 export const notificacionesRelations = relations(notificaciones, ({ one }) => ({
   usuario: one(usuarios, { fields: [notificaciones.usuarioId], references: [usuarios.id] }),
+}))
+
+// ============================================================
+// COMERCIAL MODULE
+// ============================================================
+
+// CLIENTES
+export const clientes = pgTable('clientes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  ruc: varchar('ruc', { length: 20 }).unique(),
+  razonSocial: varchar('razon_social', { length: 200 }).notNull(),
+  nombreComercial: varchar('nombre_comercial', { length: 200 }),
+  direccion: text('direccion'),
+  telefono: varchar('telefono', { length: 50 }),
+  email: varchar('email', { length: 100 }),
+  web: varchar('web', { length: 200 }),
+  estado: estadoClienteEnum('estado').default('prospecto').notNull(),
+  sector: varchar('sector', { length: 50 }),
+  actividad: varchar('actividad', { length: 100 }),
+  descripcion: text('descripcion'),
+  notas: text('notas'),
+  areaId: uuid('area_id').references((): any => areas.id, { onDelete: 'set null' }),
+  responsableId: uuid('responsable_id').references((): any => usuarios.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+// CONTACTOS
+export const contactos = pgTable('contactos', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  clienteId: uuid('cliente_id').references((): any => clientes.id, { onDelete: 'cascade' }).notNull(),
+  nombre: varchar('nombre', { length: 100 }).notNull(),
+  apellido: varchar('apellido', { length: 100 }),
+  cargo: varchar('cargo', { length: 100 }),
+  tipo: tipoContactoEnum('tipo').default('principal').notNull(),
+  telefono: varchar('telefono', { length: 50 }),
+  email: varchar('email', { length: 100 }),
+  celular: varchar('celular', { length: 50 }),
+  direccion: text('direccion'),
+  notas: text('notas'),
+  esPrincipal: boolean('es_principal').default(false).notNull(),
+  activo: boolean('activo').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+// OPORTUNIDADES
+export const oportunidades = pgTable('oportunidades', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  nombre: varchar('nombre', { length: 200 }).notNull(),
+  descripcion: text('descripcion'),
+  clienteId: uuid('cliente_id').references((): any => clientes.id, { onDelete: 'cascade' }).notNull(),
+  etapa: etapaOportunidadEnum('etapa').default('contacto').notNull(),
+  valorEstimado: integer('valor_estimado'),
+  probabilidad: integer('probabilidad').default(50), // 0-100
+  fechaCierre: timestamp('fecha_cierre'),
+  origen: varchar('origen', { length: 100 }),
+  responsableId: uuid('responsable_id').references((): any => usuarios.id, { onDelete: 'set null' }),
+  areaId: uuid('area_id').references((): any => areas.id, { onDelete: 'set null' }),
+  motivoPerdida: text('motivo_perdida'),
+  // proyectoId: uuid('proyecto_id').references((): any => proyectos.id, { onDelete: 'set null' }), // TODO: Implementar módulo de proyectos
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+// ACTIVIDADES
+export const actividades = pgTable('actividades', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  titulo: varchar('titulo', { length: 200 }).notNull(),
+  descripcion: text('descripcion'),
+  tipo: tipoActividadEnum('tipo').notNull(),
+  fecha: timestamp('fecha').notNull(),
+  horaInicio: timestamp('hora_inicio'),
+  horaFin: timestamp('hora_fin'),
+  lugar: varchar('lugar', { length: 200 }),
+  oportunidadId: uuid('oportunidad_id').references((): any => oportunidades.id, { onDelete: 'cascade' }),
+  clienteId: uuid('cliente_id').references((): any => clientes.id, { onDelete: 'cascade' }),
+  responsableId: uuid('responsable_id').references((): any => usuarios.id, { onDelete: 'cascade' }).notNull(),
+  participantes: jsonb('participantes'), // Array de user IDs
+  resultado: text('resultado'),
+  estado: varchar('estado', { length: 20 }).default('pendiente').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+// COTIZACIONES
+export const cotizaciones = pgTable('cotizaciones', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  codigo: varchar('codigo', { length: 50 }).unique().notNull(),
+  clienteId: uuid('cliente_id').references((): any => clientes.id, { onDelete: 'cascade' }).notNull(),
+  oportunidadId: uuid('oportunidad_id').references((): any => oportunidades.id, { onDelete: 'set null' }),
+  titulo: varchar('titulo', { length: 200 }).notNull(),
+  descripcion: text('descripcion'),
+  estado: estadoCotizacionEnum('estado').default('borrador').notNull(),
+  fechaEmision: timestamp('fecha_emision').notNull(),
+  fechaValidez: timestamp('fecha_validez'),
+  subtotal: integer('subtotal').default(0),
+  impuestos: integer('impuestos').default(0),
+  total: integer('total').default(0),
+  moneda: varchar('moneda', { length: 10 }).default('USD').notNull(),
+  condiciones: text('condiciones'),
+  notas: text('notas'),
+  responsableId: uuid('responsable_id').references((): any => usuarios.id, { onDelete: 'set null' }),
+  areaId: uuid('area_id').references((): any => areas.id, { onDelete: 'set null' }),
+  // proyectoId: uuid('proyecto_id').references((): any => proyectos.id, { onDelete: 'set null' }), // TODO: Implementar módulo de proyectos
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+// COTIZACION_ITEMS
+export const cotizacionItems = pgTable('cotizacion_items', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  cotizacionId: uuid('cotizacion_id').references((): any => cotizaciones.id, { onDelete: 'cascade' }).notNull(),
+  itemCode: varchar('item_code', { length: 50 }),
+  descripcion: text('descripcion').notNull(),
+  cantidad: integer('cantidad').default(1).notNull(),
+  unidad: varchar('unidad', { length: 20 }).default('unidad').notNull(),
+  precioUnitario: integer('precio_unitario').notNull(),
+  subtotal: integer('subtotal').notNull(),
+  impuestos: integer('impuestos').default(0),
+  total: integer('total').notNull(),
+  orden: integer('orden').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+// ============================================================
+// COMERCIAL MODULE RELATIONS
+// ============================================================
+
+export const clientesRelations = relations(clientes, ({ one, many }) => ({
+  area: one(areas, { fields: [clientes.areaId], references: [areas.id] }),
+  responsable: one(usuarios, { fields: [clientes.responsableId], references: [usuarios.id] }),
+  contactos: many(contactos),
+  oportunidades: many(oportunidades),
+  actividades: many(actividades),
+  cotizaciones: many(cotizaciones),
+}))
+
+export const contactosRelations = relations(contactos, ({ one }) => ({
+  cliente: one(clientes, { fields: [contactos.clienteId], references: [clientes.id] }),
+}))
+
+export const oportunidadesRelations = relations(oportunidades, ({ one, many }) => ({
+  cliente: one(clientes, { fields: [oportunidades.clienteId], references: [clientes.id] }),
+  responsable: one(usuarios, { fields: [oportunidades.responsableId], references: [usuarios.id] }),
+  area: one(areas, { fields: [oportunidades.areaId], references: [areas.id] }),
+  // proyecto: one(proyectos, { fields: [oportunidades.proyectoId], references: [proyectos.id] }), // TODO: Implementar módulo de proyectos
+  actividades: many(actividades),
+  cotizaciones: many(cotizaciones),
+}))
+
+export const actividadesRelations = relations(actividades, ({ one }) => ({
+  oportunidad: one(oportunidades, { fields: [actividades.oportunidadId], references: [oportunidades.id] }),
+  cliente: one(clientes, { fields: [actividades.clienteId], references: [clientes.id] }),
+  responsable: one(usuarios, { fields: [actividades.responsableId], references: [usuarios.id] }),
+}))
+
+export const cotizacionesRelations = relations(cotizaciones, ({ one, many }) => ({
+  cliente: one(clientes, { fields: [cotizaciones.clienteId], references: [clientes.id] }),
+  oportunidad: one(oportunidades, { fields: [cotizaciones.oportunidadId], references: [oportunidades.id] }),
+  responsable: one(usuarios, { fields: [cotizaciones.responsableId], references: [usuarios.id] }),
+  area: one(areas, { fields: [cotizaciones.areaId], references: [areas.id] }),
+  // proyecto: one(proyectos, { fields: [cotizaciones.proyectoId], references: [proyectos.id] }), // TODO: Implementar módulo de proyectos
+  items: many(cotizacionItems),
+}))
+
+export const cotizacionItemsRelations = relations(cotizacionItems, ({ one }) => ({
+  cotizacion: one(cotizaciones, { fields: [cotizacionItems.cotizacionId], references: [cotizaciones.id] }),
 }))

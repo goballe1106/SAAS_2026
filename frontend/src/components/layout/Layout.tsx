@@ -39,6 +39,12 @@ const navigation = [
     description: 'Resumen general'
   },
   { 
+    name: 'Clientes', 
+    href: '/clientes', 
+    icon: Users,
+    description: 'Gestión de clientes'
+  },
+  { 
     name: 'Usuarios', 
     href: '/usuarios', 
     icon: Users,

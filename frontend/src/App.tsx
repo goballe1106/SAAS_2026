@@ -5,6 +5,7 @@ import LoginPage from './pages/auth/LoginPage'
 import DashboardPage from './pages/dashboard/DashboardPage'
 import UsuariosPage from './pages/usuarios/UsuariosPage'
 import AreasPage from './pages/areas/AreasPage'
+import ClientesPage from './pages/clientes/ClientesPage'
 import { Toaster } from './components/ui/toast'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="/" element={<PrivateRoute><Layout><DashboardPage /></Layout></PrivateRoute>} />
         <Route path="/usuarios" element={<PrivateRoute><Layout><UsuariosPage /></Layout></PrivateRoute>} />
         <Route path="/areas" element={<PrivateRoute><Layout><AreasPage /></Layout></PrivateRoute>} />
+        <Route path="/clientes" element={<PrivateRoute><Layout><ClientesPage /></Layout></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Toaster />

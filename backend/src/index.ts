@@ -12,6 +12,7 @@ import { usuariosRoutes } from './routes/usuarios'
 import { areasRoutes } from './routes/areas'
 import { rolesRoutes } from './routes/roles'
 import { dashboardRoutes } from './routes/dashboard'
+import { clientesRoutes } from './routes/clientes'
 
 const PORT = Number(process.env.API_PORT || process.env.PORT || 3001)
 const HOST = '0.0.0.0'
@@ -114,6 +115,7 @@ async function buildServer() {
   await fastify.register(areasRoutes, { prefix: '/api/v1/areas' })
   await fastify.register(rolesRoutes, { prefix: '/api/v1/roles' })
   await fastify.register(dashboardRoutes, { prefix: '/api/v1/dashboard' })
+  await fastify.register(clientesRoutes, { prefix: '/api/v1/clientes' })
 
   return fastify
 }
