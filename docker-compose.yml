@@ -36,7 +36,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
-      DB_HOST: db
+      DB_HOST: erp_sas_db
       DB_PORT: 5432
       DB_USER: erp_sas
       DB_PASSWORD: ${DB_PASSWORD:-ErpSas2026!}
