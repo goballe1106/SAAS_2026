@@ -12,7 +12,7 @@ const ESTADOS_VACACION = [
   { value: 'pendiente', label: 'Pendiente', color: 'bg-yellow-100 text-yellow-700', icon: Clock },
   { value: 'aprobado', label: 'Aprobado', color: 'bg-green-100 text-green-700', icon: CheckCircle },
   { value: 'rechazado', label: 'Rechazado', color: 'bg-red-100 text-red-700', icon: XCircle },
-  { value: 'aprovechado', label: 'Aprovechado', color: 'bg-blue-100 text-blue-700', icon: Sun },
+  { value: 'aprovechado', label: 'Aprovechado', color: 'bg-blue-100 text-blue-700', icon: Palmtree },
 ]
 
 export default function VacacionesPage() {
@@ -55,7 +55,7 @@ export default function VacacionesPage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Sun className="h-7 w-7 text-cyan-600" />
+            <Palmtree className="h-7 w-7 text-cyan-600" />
             Vacaciones
           </h1>
           <p className="text-gray-500">Gestión de vacaciones y permisos</p>
@@ -96,7 +96,7 @@ export default function VacacionesPage() {
                 <p className="text-sm text-blue-600 font-medium">Aprovechados</p>
                 <p className="text-3xl font-bold text-blue-700">{stats.aprovehados}</p>
               </div>
-              <Sun className="h-10 w-10 text-blue-400" />
+              <Palmtree className="h-10 w-10 text-blue-400" />
             </div>
           </CardContent>
         </Card>
@@ -191,7 +191,7 @@ export default function VacacionesPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className="h-12 w-12 bg-cyan-100 rounded-lg flex items-center justify-center">
-                        <Sun className="h-6 w-6 text-cyan-600" />
+                        <Palmtree className="h-6 w-6 text-cyan-600" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
