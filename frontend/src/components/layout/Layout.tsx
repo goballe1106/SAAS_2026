@@ -95,6 +95,7 @@ const modules = [
       { name: 'Equipos', href: '/equipos', icon: Monitor },
       { name: 'Licencias', href: '/licencias', icon: Key },
       { name: 'Mantenimientos', href: '/mantenimiento', icon: Wrench },
+      { name: 'KPIs TI', href: '/kpis-ti', icon: TrendingUp },
     ]
   },
   { 
