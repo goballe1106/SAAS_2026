@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { 
   Ticket, Search, Plus, Edit, Trash2, Clock, AlertCircle, CheckCircle, XCircle,
-  User, Calendar, ArrowRight, MessageSquare, Paperclip, Send
+  User, Calendar, ArrowRight, MessageSquare, Send
 } from 'lucide-react'
 
 const PRIORIDADES = [
@@ -15,16 +15,47 @@ const PRIORIDADES = [
   { value: 'urgente', label: 'Urgente', color: 'bg-red-100 text-red-700', desc: 'Crítico' },
 ]
 
-const CATEGORIAS = [
-  { value: 'soporte', label: 'Soporte Técnico', icon: '💻' },
-  { value: 'hardware', label: 'Hardware', icon: '🖥️' },
-  { value: 'software', label: 'Software', icon: '📀' },
-  { value: 'red', label: 'Red/Conectividad', icon: '🌐' },
-  { value: 'seguridad', label: 'Seguridad', icon: '🔒' },
-  { value: 'acceso', label: 'Solicitud de Acceso', icon: '🔑' },
-  { value: 'inventario', label: 'Inventario', icon: '📦' },
-  { value: 'otro', label: 'Otro', icon: '📋' },
-]
+// Tipos de tickets por área
+const TIPOS_POR_AREA: Record<string, { value: string; label: string; icon: string }[]> = {
+  ti: [
+    { value: 'soporte', label: 'Soporte Técnico', icon: '💻' },
+    { value: 'hardware', label: 'Hardware', icon: '🖥️' },
+    { value: 'software', label: 'Software', icon: '📀' },
+    { value: 'red', label: 'Red/Conectividad', icon: '🌐' },
+    { value: 'seguridad', label: 'Seguridad', icon: '🔒' },
+    { value: 'acceso', label: 'Solicitud de Acceso', icon: '🔑' },
+    { value: 'inventario', label: 'Inventario TI', icon: '📦' },
+  ],
+  gth: [
+    { value: 'vacaciones', label: 'Vacaciones', icon: '🏖️' },
+    { value: 'permisos', label: 'Permisos', icon: '📅' },
+    { value: 'payroll', label: 'Liquidación/Payroll', icon: '💰' },
+    { value: 'beneficios', label: 'Beneficios', icon: '🎁' },
+    { value: 'contratacion', label: 'Contratación', icon: '📝' },
+    { value: 'capacitacion', label: 'Capacitación', icon: '📚' },
+  ],
+  cont: [
+    { value: 'facturacion', label: 'Facturación', icon: '📄' },
+    { value: 'pagos', label: 'Pagos', icon: '💳' },
+    { value: 'consulta', label: 'Consulta Contable', icon: '🔍' },
+    { value: 'reporte', label: 'Solicitud de Reporte', icon: '📊' },
+    { value: 'retenciones', label: 'Retenciones', icon: '📋' },
+  ],
+  log: [
+    { value: 'compra', label: 'Solicitud de Compra', icon: '🛒' },
+    { value: 'inventario', label: 'Inventario', icon: '📦' },
+    { value: 'entrega', label: 'Entrega de Materiales', icon: '🚚' },
+    { value: 'proveedor', label: 'Gestión de Proveedores', icon: '🏭' },
+    { value: 'almacen', label: 'Almacén', icon: '🏠' },
+  ],
+  ope: [
+    { value: 'trabajo', label: 'Orden de Trabajo', icon: '🔧' },
+    { value: 'bitacora', label: 'Bitácora', icon: '📖' },
+    { value: 'reporte', label: 'Reporte de Avance', icon: '📊' },
+    { value: 'recurso', label: 'Solicitud de Recurso', icon: '👷' },
+    { value: 'seguridad', label: 'Seguridad', icon: '🦺' },
+  ],
+}
 
 const AREAS = [
   { value: 'ti', label: 'TI - Tecnología', responsable: 'Carlos López' },
@@ -46,23 +77,36 @@ const ESTADOS_TICKET = [
 
 export default function TicketsPage() {
   const [tickets, setTickets] = useState<any[]>([
-    { id: 1, titulo: 'No puedo acceder al sistema', descripcion: 'Me aparece error de credentials', prioridad: 'urgente', categoria: 'acceso', areaDestino: 'ti', estado: 'abierto', solicitante: 'Juan Pérez', fechaCreacion: '2026-03-21 09:30', comentarios: 3 },
-    { id: 2, titulo: 'Impresora no funciona', descripcion: 'La impresora del 2do piso no imprime', prioridad: 'media', categoria: 'hardware', areaDestino: 'ti', estado: 'en_proceso', solicitante: 'María García', fechaCreacion: '2026-03-20 14:15', comentarios: 5 },
-    { id: 3, titulo: 'Solicitud de licencia Adobe', descripcion: 'Necesito licencia para proyecto de diseño', prioridad: 'baja', categoria: 'software', areaDestino: 'ti', estado: 'resuelto', solicitante: 'Carlos López', fechaCreacion: '2026-03-19 10:00', comentarios: 2 },
+    { id: 1, titulo: 'No puedo acceder al sistema', descripcion: 'Me aparece error de credentials', prioridad: 'urgente', categoria: 'acceso', tipoLabel: 'Solicitud de Acceso', areaDestino: 'ti', estado: 'abierto', solicitante: 'Juan Pérez', fechaCreacion: '2026-03-21 09:30', comentarios: 3 },
+    { id: 2, titulo: 'Impresora no funciona', descripcion: 'La impresora del 2do piso no imprime', prioridad: 'media', categoria: 'hardware', tipoLabel: 'Hardware', areaDestino: 'ti', estado: 'en_proceso', solicitante: 'María García', fechaCreacion: '2026-03-20 14:15', comentarios: 5 },
+    { id: 3, titulo: 'Solicitud de licencia Adobe', descripcion: 'Necesito licencia para proyecto de diseño', prioridad: 'baja', categoria: 'software', tipoLabel: 'Software', areaDestino: 'ti', estado: 'resuelto', solicitante: 'Carlos López', fechaCreacion: '2026-03-19 10:00', comentarios: 2 },
+    { id: 4, titulo: 'Solicitud de vacaciones', descripcion: 'Quiero tomar mis vacaciones en abril', prioridad: 'media', categoria: 'vacaciones', tipoLabel: 'Vacaciones', areaDestino: 'gth', estado: 'abierto', solicitante: 'Ana Martínez', fechaCreacion: '2026-03-21 08:00', comentarios: 1 },
+    { id: 5, titulo: 'Factura pendiente de pago', descripcion: 'La factura F001-00045 está vencida', prioridad: 'alta', categoria: 'facturacion', tipoLabel: 'Facturación', areaDestino: 'cont', estado: 'pendiente', solicitante: 'Roberto Sánchez', fechaCreacion: '2026-03-20 11:00', comentarios: 2 },
   ])
   const [search, setSearch] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('')
-  const [filtroPrioridad, setFiltroPrioridad] = useState('')
+  const [filtroArea, setFiltroArea] = useState('')
   const [showForm, setShowForm] = useState(false)
-  const [viewTicket, setViewTicket] = useState<any>(null)
   const [formData, setFormData] = useState<any>({
-    titulo: '', descripcion: '', prioridad: 'media', categoria: 'soporte', areaDestino: 'ti', solicitante: ''
+    titulo: '', descripcion: '', prioridad: 'media', categoria: '', areaDestino: 'ti', solicitante: ''
   })
+
+  // Obtener tipos según el área seleccionada
+  const getTiposPorArea = (area: string) => {
+    return TIPOS_POR_AREA[area] || []
+  }
+
+  // Cuando cambia el área, resetear la categoría
+  const handleAreaChange = (area: string) => {
+    setFormData({ ...formData, areaDestino: area, categoria: '' })
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    const tipoLabel = getTiposPorArea(formData.areaDestino).find(t => t.value === formData.categoria)?.label || formData.categoria
     const nuevo = { 
       ...formData, 
+      tipoLabel,
       id: Date.now(), 
       estado: 'abierto', 
       fechaCreacion: new Date().toLocaleString(), 
@@ -70,15 +114,15 @@ export default function TicketsPage() {
     }
     setTickets([nuevo, ...tickets])
     setShowForm(false)
-    setFormData({ titulo: '', descripcion: '', prioridad: 'media', categoria: 'soporte', areaDestino: 'ti', solicitante: '' })
+    setFormData({ titulo: '', descripcion: '', prioridad: 'media', categoria: '', areaDestino: 'ti', solicitante: '' })
   }
 
   const ticketsFiltrados = tickets.filter(t => {
     const matchSearch = t.titulo.toLowerCase().includes(search.toLowerCase()) || 
                        t.descripcion.toLowerCase().includes(search.toLowerCase())
     const matchEstado = !filtroEstado || t.estado === filtroEstado
-    const matchPrioridad = !filtroPrioridad || t.prioridad === filtroPrioridad
-    return matchSearch && matchEstado && matchPrioridad
+    const matchArea = !filtroArea || t.areaDestino === filtroArea
+    return matchSearch && matchEstado && matchArea
   })
 
   const stats = {
@@ -90,7 +134,6 @@ export default function TicketsPage() {
 
   const getPrioridad = (p: string) => PRIORIDADES.find(pr => pr.value === p)
   const getEstado = (e: string) => ESTADOS_TICKET.find(es => es.value === e)
-  const getCategoria = (c: string) => CATEGORIAS.find(cat => cat.value === c)
   const getArea = (a: string) => AREAS.find(ar => ar.value === a)
 
   return (
@@ -101,7 +144,7 @@ export default function TicketsPage() {
             <Ticket className="h-7 w-7 text-indigo-600" />
             Sistema de Tickets
           </h1>
-          <p className="text-gray-500">Gestión de solicitudes entre áreas</p>
+          <p className="text-gray-500">Gestión de solicitudes por área</p>
         </div>
         <Button onClick={() => setShowForm(!showForm)} className="bg-indigo-600 hover:bg-indigo-700">
           <Plus className="h-4 w-4 mr-2" /> Nuevo Ticket
@@ -172,21 +215,24 @@ export default function TicketsPage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
+                  <label className="text-sm font-medium text-gray-700">Área Destino *</label>
+                  <select value={formData.areaDestino} onChange={(e) => handleAreaChange(e.target.value)} className="w-full mt-1 p-2 border rounded-md bg-white">
+                    {AREAS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Tipo de Solicitud *</label>
+                  <select value={formData.categoria} onChange={(e) => setFormData({...formData, categoria: e.target.value})} required className="w-full mt-1 p-2 border rounded-md bg-white">
+                    <option value="">Seleccionar tipo...</option>
+                    {getTiposPorArea(formData.areaDestino).map(t => (
+                      <option key={t.value} value={t.value}>{t.icon} {t.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
                   <label className="text-sm font-medium text-gray-700">Prioridad</label>
                   <select value={formData.prioridad} onChange={(e) => setFormData({...formData, prioridad: e.target.value})} className="w-full mt-1 p-2 border rounded-md bg-white">
                     {PRIORIDADES.map(p => <option key={p.value} value={p.value}>{p.label} - {p.desc}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Categoría</label>
-                  <select value={formData.categoria} onChange={(e) => setFormData({...formData, categoria: e.target.value})} className="w-full mt-1 p-2 border rounded-md bg-white">
-                    {CATEGORIAS.map(c => <option key={c.value} value={c.value}>{c.icon} {c.label}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Área Destino</label>
-                  <select value={formData.areaDestino} onChange={(e) => setFormData({...formData, areaDestino: e.target.value})} className="w-full mt-1 p-2 border rounded-md bg-white">
-                    {AREAS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
                   </select>
                 </div>
               </div>
@@ -215,19 +261,19 @@ export default function TicketsPage() {
                 <Input placeholder="Buscar tickets..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
               </div>
             </div>
+            <select value={filtroArea} onChange={(e) => setFiltroArea(e.target.value)} className="p-2 border rounded-md bg-white">
+              <option value="">Todas las áreas</option>
+              {AREAS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
+            </select>
             <select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)} className="p-2 border rounded-md bg-white">
               <option value="">Todos los estados</option>
               {ESTADOS_TICKET.map(e => <option key={e.value} value={e.value}>{e.label}</option>)}
-            </select>
-            <select value={filtroPrioridad} onChange={(e) => setFiltroPrioridad(e.target.value)} className="p-2 border rounded-md bg-white">
-              <option value="">Todas las prioridades</option>
-              {PRIORIDADES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
             </select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Kanban / Lista */}
+      {/* Lista de tickets */}
       <Card>
         <CardHeader>
           <CardTitle>Tickets ({ticketsFiltrados.length})</CardTitle>
@@ -237,7 +283,6 @@ export default function TicketsPage() {
             {ticketsFiltrados.map((ticket) => {
               const prioridad = getPrioridad(ticket.prioridad)
               const estado = getEstado(ticket.estado)
-              const categoria = getCategoria(ticket.categoria)
               const area = getArea(ticket.areaDestino)
               const EstadoIcon = estado?.icon || AlertCircle
               
@@ -250,11 +295,11 @@ export default function TicketsPage() {
                           <span className={`px-2 py-0.5 rounded text-xs font-medium ${prioridad?.color}`}>
                             {prioridad?.label}
                           </span>
-                          <span className="text-sm bg-gray-100 px-2 py-0.5 rounded">
-                            {categoria?.icon} {categoria?.label}
+                          <span className="text-sm bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded flex items-center gap-1">
+                            {area?.label}
                           </span>
-                          <span className="text-xs text-gray-500 flex items-center gap-1">
-                            <ArrowRight className="h-3 w-3" /> {area?.label}
+                          <span className="text-xs text-gray-500">
+                            {ticket.tipoLabel}
                           </span>
                         </div>
                         <h3 className="font-semibold mt-2 text-gray-900">{ticket.titulo}</h3>
