@@ -78,7 +78,7 @@ export async function proyectosRoutes(fastify: FastifyInstance) {
   })
 
   // POST proyectos
-  fastify.post('', async (request, reply) => {
+  fastify.post('/'), async (request, reply) => {
     try {
       const validatedData = createProyectoSchema.parse(request.body)
       const proyecto = await proyectosService.createProyecto(validatedData)
