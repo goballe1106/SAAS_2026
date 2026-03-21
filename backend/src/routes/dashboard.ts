@@ -7,7 +7,7 @@ import { authGuard } from '../middleware/auth'
 export async function dashboardRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', authGuard)
 
-  // GET /api/v1/dashboard
+  // GET dashboard
   fastify.get('/', async (request, reply) => {
     const [
       usuariosCount,

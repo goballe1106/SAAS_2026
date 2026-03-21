@@ -319,7 +319,6 @@ export const oportunidades = pgTable('oportunidades', {
   responsableId: uuid('responsable_id').references((): any => usuarios.id, { onDelete: 'set null' }),
   areaId: uuid('area_id').references((): any => areas.id, { onDelete: 'set null' }),
   motivoPerdida: text('motivo_perdida'),
-  // proyectoId: uuid('proyecto_id').references((): any => proyectos.id, { onDelete: 'set null' }), // TODO: Implementar módulo de proyectos
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
@@ -363,7 +362,6 @@ export const cotizaciones = pgTable('cotizaciones', {
   notas: text('notas'),
   responsableId: uuid('responsable_id').references((): any => usuarios.id, { onDelete: 'set null' }),
   areaId: uuid('area_id').references((): any => areas.id, { onDelete: 'set null' }),
-  // proyectoId: uuid('proyecto_id').references((): any => proyectos.id, { onDelete: 'set null' }), // TODO: Implementar módulo de proyectos
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })

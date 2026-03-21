@@ -7,7 +7,7 @@ import { authGuard } from '../middleware/auth'
 export async function rolesRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', authGuard)
 
-  // GET /api/v1/roles
+  // GET /roles
   fastify.get('/', async (request, reply) => {
     const data = await db.query.roles.findMany({
       with: {
@@ -27,7 +27,7 @@ export async function rolesRoutes(fastify: FastifyInstance) {
     }
   })
 
-  // GET /api/v1/roles/options
+  // GET /roles/options
   fastify.get('/options', async (request, reply) => {
     const data = await db.select({
       value: roles.id,

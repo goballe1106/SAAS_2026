@@ -9,7 +9,7 @@ const loginSchema = z.object({
 })
 
 export async function authRoutes(fastify: FastifyInstance) {
-  // POST /api/v1/auth/login
+  // POST auth/login
   fastify.post('/login', async (request, reply) => {
     const body = loginSchema.parse(request.body)
 
@@ -40,7 +40,7 @@ export async function authRoutes(fastify: FastifyInstance) {
     }
   })
 
-  // POST /api/v1/auth/refresh
+  // POST auth/refresh
   fastify.post('/refresh', async (request, reply) => {
     const { refreshToken } = request.body as any
 
@@ -86,7 +86,7 @@ export async function authRoutes(fastify: FastifyInstance) {
     }
   })
 
-  // POST /api/v1/auth/logout
+  // POST auth/logout
   fastify.post('/logout', { preHandler: [authGuard] }, async (request, reply) => {
     const user = request.user as any
     const { refreshToken } = request.body as any
@@ -96,7 +96,7 @@ export async function authRoutes(fastify: FastifyInstance) {
     return { success: true, data: { message: 'Sesión cerrada' } }
   })
 
-  // GET /api/v1/auth/me
+  // GET auth/me
   fastify.get('/me', { preHandler: [authGuard] }, async (request, reply) => {
     const user = request.user as any
     const me = await AuthService.getMe(user.id)

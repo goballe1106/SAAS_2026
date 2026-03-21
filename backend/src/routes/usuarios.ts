@@ -24,7 +24,7 @@ const updateSchema = z.object({
 export async function usuariosRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', authGuard)
 
-  // GET /api/v1/usuarios
+  // GET /usuarios
   fastify.get('/', async (request, reply) => {
     const query = request.query as any
     const result = await UsuariosService.list({
@@ -37,14 +37,14 @@ export async function usuariosRoutes(fastify: FastifyInstance) {
     return { success: true, ...result }
   })
 
-  // GET /api/v1/usuarios/:id
+  // GET usuarios/:id - Obtener usuario por ID
   fastify.get('/:id', async (request, reply) => {
     const { id } = request.params as any
     const user = await UsuariosService.getById(id)
     return { success: true, data: user }
   })
 
-  // POST /api/v1/usuarios
+  // POST usuarios - Crear nuevo usuario
   fastify.post('/', { preHandler: [adminGuard] }, async (request, reply) => {
     const body = createSchema.parse(request.body)
     const currentUser = request.user as any
@@ -53,7 +53,7 @@ export async function usuariosRoutes(fastify: FastifyInstance) {
     return { success: true, data: user }
   })
 
-  // PUT /api/v1/usuarios/:id
+  // PUT usuarios/:id - Actualizar usuario
   fastify.put('/:id', { preHandler: [adminGuard] }, async (request, reply) => {
     const { id } = request.params as any
     const body = updateSchema.parse(request.body)
@@ -62,7 +62,7 @@ export async function usuariosRoutes(fastify: FastifyInstance) {
     return { success: true, data: user }
   })
 
-  // DELETE /api/v1/usuarios/:id
+  // DELETE usuarios/:id - Eliminar usuario
   fastify.delete('/:id', { preHandler: [adminGuard] }, async (request, reply) => {
     const { id } = request.params as any
     const currentUser = request.user as any

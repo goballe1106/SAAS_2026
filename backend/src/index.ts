@@ -112,12 +112,12 @@ async function buildServer() {
 
   // API Routes
   await fastify.register(authRoutes, { prefix: '/api/v1/auth' })
-  await fastify.register(usuariosRoutes, { prefix: '/api/v1' })
-  await fastify.register(areasRoutes, { prefix: '/api/v1' })
-  await fastify.register(rolesRoutes, { prefix: '/api/v1' })
-  await fastify.register(dashboardRoutes, { prefix: '/api/v1' })
-  await fastify.register(clientesRoutes, { prefix: '/api/v1' })
-  await fastify.register(proyectosRoutes, { prefix: '/api/v1' })
+  await fastify.register(usuariosRoutes, { prefix: '/api/v1/usuarios' })
+  await fastify.register(clientesRoutes, { prefix: '/api/v1/clientes' })
+  await fastify.register(proyectosRoutes, { prefix: '/api/v1/proyectos' })
+  await fastify.register(rolesRoutes, { prefix: '/api/v1/roles' })
+  await fastify.register(dashboardRoutes, { prefix: '/api/v1/dashboard' })
+  await fastify.register(areasRoutes, { prefix: '/api/v1/areas' })
 
   return fastify
 }

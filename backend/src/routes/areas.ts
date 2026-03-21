@@ -25,32 +25,32 @@ const updateSchema = z.object({
 export async function areasRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', authGuard)
 
-  // GET /api/v1/areas
+  // GET /areas
   fastify.get('/', async (request, reply) => {
     const data = await AreasService.list()
     return { success: true, data }
   })
 
-  // GET /api/v1/areas/tree
+  // GET /areas/tree
   fastify.get('/tree', async (request, reply) => {
     const data = await AreasService.getTree()
     return { success: true, data }
   })
 
-  // GET /api/v1/areas/options
+  // GET /areas/options
   fastify.get('/options', async (request, reply) => {
     const data = await AreasService.getOptions()
     return { success: true, data }
   })
 
-  // GET /api/v1/areas/:id
+  // GET /areas/:id
   fastify.get('/:id', async (request, reply) => {
     const { id } = request.params as any
     const data = await AreasService.getById(id)
     return { success: true, data }
   })
 
-  // POST /api/v1/areas
+  // POST /areas
   fastify.post('/', { preHandler: [adminGuard] }, async (request, reply) => {
     const body = createSchema.parse(request.body)
     const currentUser = request.user as any
@@ -59,20 +59,18 @@ export async function areasRoutes(fastify: FastifyInstance) {
     return { success: true, data }
   })
 
-  // PUT /api/v1/areas/:id
+  // PUT /areas/:id
   fastify.put('/:id', { preHandler: [adminGuard] }, async (request, reply) => {
     const { id } = request.params as any
     const body = updateSchema.parse(request.body)
-    const currentUser = request.user as any
-    const data = await AreasService.update(id, body, currentUser.id)
+    const data = await AreasService.update(id, body)
     return { success: true, data }
   })
 
-  // DELETE /api/v1/areas/:id
+  // DELETE /areas/:id
   fastify.delete('/:id', { preHandler: [adminGuard] }, async (request, reply) => {
     const { id } = request.params as any
-    const currentUser = request.user as any
-    const data = await AreasService.delete(id, currentUser.id)
-    return { success: true, data }
+    await AreasService.delete(id)
+    return { success: true }
   })
 }
