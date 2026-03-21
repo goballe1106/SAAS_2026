@@ -218,8 +218,8 @@ export default function Layout({ children }: LayoutProps) {
               <User className="h-5 w-5" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user?.nombreCompleto || 'Usuario'}</p>
-              <p className="text-xs text-slate-400 truncate">{user?.email || 'admin@erp.com'}</p>
+              <p className="text-sm font-medium truncate">{user?.name || 'Usuario' || 'Usuario'}</p>
+              <p className="text-xs text-slate-400 truncate">{user?.email || 'admin@erp.com' || 'admin@erp.com'}</p>
             </div>
             <button onClick={handleLogout} className="text-slate-400 hover:text-white">
               <LogOut className="h-5 w-5" />
