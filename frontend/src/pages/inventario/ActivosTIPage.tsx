@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
+
 import { 
   Monitor, Search, Plus, Edit, Trash2, Laptop, Server, Wifi, Smartphone, 
   Keyboard, Mouse, Printer, HardDrive, Tv, Package, AlertTriangle, CheckCircle,
@@ -41,7 +41,7 @@ const UBICACIONES = [
 ]
 
 export default function ActivosTIPage() {
-  const [activos, setActivos] = useState<any[]>([
+  const [activos, setActivos] = useState<{id: number; codigo: string; serie: string; descripcion: string; categoria: string; estado: string; responsable: string; ubicacion: string; fechaAdquisicion: string; costo: number}[]>([
     { id: 1, codigo: 'TI-001', serie: 'SN123456', descripcion: 'Dell Latitude 5520', categoria: 'laptop', estado: 'asignado', responsable: 'Juan Pérez', ubicacion: 'oficina_principal', fechaAdquisicion: '2025-01-15', costo: 2500 },
     { id: 2, codigo: 'TI-002', serie: 'SN654321', descripcion: 'HP ProDesk 400', categoria: 'computadora', estado: 'disponible', responsable: '', ubicacion: 'almacen', fechaAdquisicion: '2024-06-20', costo: 1800 },
     { id: 3, codigo: 'TI-003', serie: 'SN111222', descripcion: 'Monitor Samsung 24"', categoria: 'monitor', estado: 'asignado', responsable: 'María García', ubicacion: 'oficina_principal', fechaAdquisicion: '2025-02-01', costo: 450 },
