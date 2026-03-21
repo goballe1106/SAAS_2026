@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify'
-import { ProyectosService, createProyectoSchema, updateProyectoSchema } from '../services.service'
+import { ProyectosService, createProyectoSchema, updateProyectoSchema } from '../services/proyectos.service'
 import { z } from 'zod'
 
 export async function proyectosRoutes(fastify: FastifyInstance) {
