@@ -7,6 +7,7 @@ export async function proyectosRoutes(fastify: FastifyInstance) {
 
   // Middleware de autenticación para todas las rutas
   fastify.addHook('preHandler', async (request, reply) => {
+    await request.jwtVerify()
     if (!request.user) {
       return reply.status(401).send({ error: 'No autorizado' })
     }
