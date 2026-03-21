@@ -41,16 +41,16 @@ const UBICACIONES = [
 ]
 
 export default function ActivosTIPage() {
-  const [activos, setActivos] = useState<{id: number; codigo: string; serie: string; descripcion: string; categoria: string; estado: string; responsable: string; ubicacion: string; fechaAdquisicion: string; costo: number}[]>([
-    { id: 1, codigo: 'TI-001', serie: 'SN123456', descripcion: 'Dell Latitude 5520', categoria: 'laptop', estado: 'asignado', responsable: 'Juan Pérez', ubicacion: 'oficina_principal', fechaAdquisicion: '2025-01-15', costo: 2500 },
-    { id: 2, codigo: 'TI-002', serie: 'SN654321', descripcion: 'HP ProDesk 400', categoria: 'computadora', estado: 'disponible', responsable: '', ubicacion: 'almacen', fechaAdquisicion: '2024-06-20', costo: 1800 },
-    { id: 3, codigo: 'TI-003', serie: 'SN111222', descripcion: 'Monitor Samsung 24"', categoria: 'monitor', estado: 'asignado', responsable: 'María García', ubicacion: 'oficina_principal', fechaAdquisicion: '2025-02-01', costo: 450 },
+  const [activos, setActivos] = useState<any[]>([
+    { id: 1, codigo: 'TI-001', serie: 'SN123456', descripcion: 'Dell Latitude 5520', categoria: 'laptop', estado: 'asignado', responsable: 'Juan Pérez', ubicacion: 'oficina_principal', fechaAdquisicion: '2025-01-15', costo: 2500, marca: 'Dell', modelo: 'Latitude 5520' },
+    { id: 2, codigo: 'TI-002', serie: 'SN654321', descripcion: 'HP ProDesk 400', categoria: 'computadora', estado: 'disponible', responsable: '', ubicacion: 'almacen', fechaAdquisicion: '2024-06-20', costo: 1800, marca: 'HP', modelo: 'ProDesk 400' },
+    { id: 3, codigo: 'TI-003', serie: 'SN111222', descripcion: 'Monitor Samsung 24"', categoria: 'monitor', estado: 'asignado', responsable: 'María García', ubicacion: 'oficina_principal', fechaAdquisicion: '2025-02-01', costo: 450, marca: 'Samsung', modelo: 'S24F350' },
   ])
   const [search, setSearch] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('')
   const [filtroCategoria, setFiltroCategoria] = useState('')
   const [showForm, setShowForm] = useState(false)
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<any>({
     codigo: '', serie: '', descripcion: '', categoria: 'computadora', 
     estado: 'disponible', responsable: '', ubicacion: 'almacen', 
     fechaAdquisicion: '', costo: 0, marca: '', modelo: ''

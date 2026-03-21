@@ -22,7 +22,7 @@ const ESTADOS_MANT = [
 ]
 
 export default function MantenimientosTIPage() {
-  const [mantenimientos, setMantenimientos] = useState<any[]>([
+  const [mantenimientos, setMantenimientos] = useState<any>([
     { id: 1, activo: 'TI-001', descripcion: 'Cambio de pasta térmica', tipo: 'preventivo', estado: 'programado', responsable: 'Juan Pérez', fechaProgramada: '2026-03-25', costo: 150 },
     { id: 2, activo: 'TI-002', descripcion: 'Reparación de disco duro', tipo: 'correctivo', estado: 'en_proceso', responsable: 'Carlos López', fechaProgramada: '2026-03-20', costo: 300 },
   ])
