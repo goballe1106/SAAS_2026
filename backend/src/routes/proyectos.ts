@@ -17,7 +17,7 @@ export async function proyectosRoutes(fastify: FastifyInstance) {
   // ============================================================
 
   // GET proyectos
-  fastify.get('/'), async (request, reply) => {
+  fastify.get('/', async (request, reply) => {
     try {
       const { page = 1, limit = 10, search, estado, areaId, responsableId } = request.query as any
       
