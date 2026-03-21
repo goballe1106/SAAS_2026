@@ -25,6 +25,7 @@ import VacacionesPage from './pages/rrhh/VacacionesPage'
 import NominaPage from './pages/rrhh/NominaPage'
 import TareasPage from './pages/proyectos/TareasPage'
 import GanttPage from './pages/proyectos/GanttPage'
+import PresupuestosPage from './pages/contabilidad/PresupuestosPage'
 import { Toaster } from './components/ui/toast'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -59,6 +60,7 @@ export default function App() {
         <Route path="/kpis-ti" element={<PrivateRoute><Layout><KPIsTIPage /></Layout></PrivateRoute>} />
         <Route path="/facturacion" element={<PrivateRoute><Layout><FacturacionPage /></Layout></PrivateRoute>} />
         <Route path="/costos" element={<PrivateRoute><Layout><CostosPage /></Layout></PrivateRoute>} />
+        <Route path="/presupuestos" element={<PrivateRoute><Layout><PresupuestosPage /></Layout></PrivateRoute>} />
         <Route path="/inventario" element={<PrivateRoute><Layout><InventarioPage /></Layout></PrivateRoute>} />
         <Route path="/compras" element={<PrivateRoute><Layout><ComprasPage /></Layout></PrivateRoute>} />
         <Route path="/proveedores" element={<PrivateRoute><Layout><ProveedoresPage /></Layout></PrivateRoute>} />
