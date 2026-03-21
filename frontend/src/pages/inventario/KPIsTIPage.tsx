@@ -180,7 +180,7 @@ export default function KPIsTIPage() {
         />
         <KPICard 
           title="Satisfacción" 
-          value={`${kpis.satisfaccion}/5`` 
+          value={`${kpis.satisfaccion}/5`} 
           subtitle="Promedio"
           icon={Users} 
           color="from-pink-50 to-pink-100 border-pink-200"
