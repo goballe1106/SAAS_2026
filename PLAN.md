@@ -28,6 +28,71 @@
 
 # 1. EXECUTIVE SUMMARY
 
+## 1.1 Arquitectura del Sistema (Basada en Diagramas)
+
+### Flujo Principal de Procesos
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    NUEVO COLABORADOR / PROYECTO                        │
+└─────────────────────────────────┬───────────────────────────────────────┘
+                                  │
+        ┌───────────────────────────┼───────────────────────────┐
+        ▼                           ▼                           ▼
+┌───────────────┐          ┌───────────────┐          ┌───────────────┐
+│      GTH      │          │      TI      │          │      LOG     │
+│  (Talento    │          │ (Tecnología) │          │ (Logística) │
+│   Humano)     │          │               │          │               │
+├───────────────┤          ├───────────────┤          ├───────────────┤
+│ • Vacaciones │          │ • Tickets    │          │ • Inventario │
+│ • Beneficios │          │ • Licencias  │          │ • Activos    │
+│ • Payroll    │────────▶│ • Equipos   │────────▶│ • Mantenim.  │
+│               │          │               │          │ • Vehículos  │
+│   SUELDO     │          │  ACTIVO CC   │          │   GASTO CC   │
+└───────┬───────┘          └───────┬───────┘          └───────┬───────┘
+        │                          │                          │
+        └──────────────────────────┼──────────────────────────┘
+                                   ▼
+                        ┌───────────────┐
+                        │     OPE      │
+                        │ (Operaciones) │
+                        ├───────────────┤
+                        │ • Registro   │
+                        │   horas/trab│
+                        │ • Costo real│
+                        └───────┬───────┘
+                                │
+                                ▼
+                    ┌───────────────────────┐
+                    │  MOTOR DE PRORRATEO  │
+                    │ (Distribución de     │
+                    │  costos reales a     │
+                    │  cada área)          │
+                    └──────────┬──────────┘
+                               │
+        ┌───────────────────────┼───────────────────────┐
+        ▼                       ▼                       ▼
+┌───────────────┐      ┌───────────────┐      ┌───────────────┐
+│    CONT       │      │  CORE ERP    │      │   REPORTES   │
+│(Contabilidad) │      │ (Base datos) │      │ (Gerencia)   │
+├───────────────┤      ├───────────────┤      ├───────────────┤
+│ • Movimientos│      │ • PostgreSQL  │      │ • Consolidado │
+│ • Centros    │◀─────│ • APIs       │─────▶│ • KPIs       │
+│   costo      │      │ • Apps ext.  │      │ • Analytics  │
+│ • Conciliar  │      └───────────────┘      └───────────────┘
+└───────────────┘
+```
+
+### Matriz de Proyectos: Fases vs Áreas
+
+| Fase | Comercial | Finanzas | GTH | Logística | TI | Gerente |
+|------|-----------|----------|-----|------------|-----|---------|
+| **Arranque** | Propuesta cliente | Presupuesto inicial | Reclutamiento | Inventario inicial | Setup sistemas | Aprobación |
+| **Desarrollo** | Seguimiento | Pagos/cobros | Payroll | Activos/vehículos | Tickets/soporte | Supervision |
+| **Cierre** | Entrega | Cierre financiero | Liquidaciones | Activos fin | Cierre tickets | Reporte final |
+
+---
+
 ## 1.1 System Overview
 
 ERP SAS is a comprehensive Enterprise Resource Planning system designed for **construction supervision and project management companies**. The system consolidates all business operations into a unified, scalable platform.
