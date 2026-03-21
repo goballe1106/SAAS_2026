@@ -47,17 +47,13 @@ async function buildServer() {
   const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:3000',
+    'http://localhost:9000',
+    'http://192.168.1.43:9000',
     process.env.APP_URL,
   ].filter(Boolean) as string[]
 
   await fastify.register(cors, {
-    origin: (origin, cb) => {
-      if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
-        cb(null, true)
-      } else {
-        cb(null, false)
-      }
-    },
+    origin: true,
     credentials: true,
   })
 
