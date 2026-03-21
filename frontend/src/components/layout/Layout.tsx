@@ -94,7 +94,7 @@ const modules = [
     items: [
       { name: 'Equipos', href: '/equipos', icon: Monitor },
       { name: 'Licencias', href: '/licencias', icon: Key },
-      { name: 'Mantenimiento', href: '/mantenimiento', icon: Settings },
+      { name: 'Mantenimientos', href: '/mantenimiento', icon: Wrench },
     ]
   },
   { 
