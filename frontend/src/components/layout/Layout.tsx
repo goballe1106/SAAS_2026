@@ -103,8 +103,9 @@ const modules = [
     icon: Users,
     items: [
       { name: 'Empleados', href: '/empleados', icon: Users },
-      { name: 'Nómina', href: '/nomina', icon: DollarSign },
+      { name: 'Asistencia', href: '/asistencia', icon: Clock },
       { name: 'Vacaciones', href: '/vacaciones', icon: Calendar },
+      { name: 'Nómina', href: '/nomina', icon: DollarSign },
     ]
   },
   { 
