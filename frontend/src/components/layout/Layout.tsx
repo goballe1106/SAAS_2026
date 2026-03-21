@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useAuthStore } from '../../stores/authStore'
+import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom'
+import { useAuthStore } from '@/stores/authStore'
+import { Button } from '@/components/ui/button'
 import { 
   LayoutDashboard, 
   Users, 
@@ -29,80 +30,70 @@ import {
   Clock,
   DollarSign,
 } from 'lucide-react'
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
 
 interface LayoutProps {
-  children: React.ReactNode
+  children?: React.ReactNode
 }
 
-const navigation = [
-  { 
-    name: 'Dashboard', 
-    href: '/', 
-    icon: LayoutDashboard,
-    description: 'Resumen general'
-  },
-  { 
-    name: 'Usuarios', 
-    href: '/usuarios', 
-    icon: Users,
-    description: 'Gestión de usuarios'
-  },
-  { 
-    name: 'Áreas', 
-    href: '/areas', 
-    icon: Building2,
-    description: 'Organización'
-  },
-  { 
-    name: 'Roles', 
-    href: '/roles', 
-    icon: Shield,
-    description: 'Permisos y roles'
-  },
-]
-
-const comercial = [
-  { name: 'Clientes', href: '/clientes', icon: Users },
-  { name: 'Contactos', href: '/contactos', icon: Mail },
-  { name: 'Oportunidades', href: '/oportunidades', icon: TrendingUp },
-  { name: 'Cotizaciones', href: '/cotizaciones', icon: FileText },
-]
-
-const proyectos = [
-  { name: 'Proyectos', href: '/proyectos', icon: FolderKanban },
-  { name: 'Tareas', href: '/tareas', icon: Calendar },
-]
-
-const operaciones = [
-  { name: 'Inventario', href: '/inventario', icon: Package },
-  { name: 'Activos', href: '/activos', icon: Wrench },
-  { name: 'Mantenimiento', href: '/operaciones', icon: Settings },
-]
-
-const rrhh = [
-  { name: 'Empleados', href: '/empleados', icon: Users },
-  { name: 'Asistencia', href: '/asistencia', icon: Clock },
-]
-
-const finanzas = [
-  { name: 'Facturación', href: '/facturacion', icon: CreditCard },
-  { name: 'Pagos', href: '/pagos', icon: CreditCard },
-]
-
-const reportes = [
-  { name: 'Analytics', href: '/analytics', icon: BarChart3 },
-  { name: 'Auditoría', href: '/auditoria', icon: Shield },
+const mainNav = [
+  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { name: 'Usuarios', href: '/usuarios', icon: Users },
+  { name: 'Áreas', href: '/areas', icon: Building2 },
+  { name: 'Roles', href: '/roles', icon: Shield },
 ]
 
 const modules = [
-  { name: 'Comercial/CRM', children: comercial, icon: Briefcase },
-  { name: 'Proyectos', children: proyectos, icon: FolderKanban },
-  { name: 'Operaciones', children: operaciones, icon: Package },
-  { name: 'RRHH', children: rrhh, icon: Users },
-  { name: 'Finanzas', children: finanzas, icon: CreditCard },
-  { name: 'Reportes', children: reportes, icon: BarChart3 },
+  { 
+    name: 'Comercial/CRM', 
+    icon: Briefcase,
+    items: [
+      { name: 'Clientes', href: '/clientes', icon: Users },
+      { name: 'Contactos', href: '/contactos', icon: Mail },
+      { name: 'Oportunidades', href: '/oportunidades', icon: TrendingUp },
+      { name: 'Cotizaciones', href: '/cotizaciones', icon: FileText },
+    ]
+  },
+  { 
+    name: 'Proyectos', 
+    icon: FolderKanban,
+    items: [
+      { name: 'Proyectos', href: '/proyectos', icon: FolderKanban },
+      { name: 'Tareas', href: '/tareas', icon: Calendar },
+    ]
+  },
+  { 
+    name: 'Operaciones', 
+    icon: Package,
+    items: [
+      { name: 'Inventario', href: '/inventario', icon: Package },
+      { name: 'Activos', href: '/activos', icon: Wrench },
+      { name: 'Mantenimiento', href: '/operaciones', icon: Settings },
+    ]
+  },
+  { 
+    name: 'RRHH', 
+    icon: Users,
+    items: [
+      { name: 'Empleados', href: '/empleados', icon: Users },
+      { name: 'Asistencia', href: '/asistencia', icon: Clock },
+    ]
+  },
+  { 
+    name: 'Finanzas', 
+    icon: DollarSign,
+    items: [
+      { name: 'Facturación', href: '/facturacion', icon: FileText },
+      { name: 'Pagos', href: '/pagos', icon: CreditCard },
+    ]
+  },
+  { 
+    name: 'Reportes', 
+    icon: BarChart3,
+    items: [
+      { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+      { name: 'Auditoría', href: '/auditoria', icon: Shield },
+    ]
+  },
 ]
 
 export default function Layout({ children }: LayoutProps) {
@@ -125,6 +116,8 @@ export default function Layout({ children }: LayoutProps) {
     )
   }
 
+  const isActive = (href: string) => location.pathname === href
+
   return (
     <div className="min-h-screen flex bg-gray-50/30">
       {/* Mobile overlay */}
@@ -136,124 +129,80 @@ export default function Layout({ children }: LayoutProps) {
       )}
 
       {/* Sidebar */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-gradient-to-b from-slate-900 to-slate-800 text-white transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:z-auto shadow-2xl ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-        {/* Logo and branding */}
-        <div className="flex items-center justify-between h-16 px-6 border-b border-slate-700/50">
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="relative">
-              <Building2 className="h-8 w-8 text-blue-400 group-hover:text-blue-300 transition-colors" />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-slate-800 text-white transform transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        {/* Logo */}
+        <div className="flex items-center justify-between h-16 px-4 border-b border-slate-700">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">ERP</span>
             </div>
-            <div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
-                ERP SAS
-              </span>
-              <p className="text-xs text-slate-400">Enterprise System</p>
-            </div>
-          </Link>
-          <button
-            className="lg:hidden text-slate-400 hover:text-white transition-colors"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <X className="h-5 w-5" />
+            <span className="font-bold text-lg">ERP SAS</span>
+          </div>
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden">
+            <X className="h-6 w-6" />
           </button>
         </div>
 
-        {/* Search bar */}
-        <div className="px-4 py-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input
-              placeholder="Buscar..."
-              className="pl-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-
-        {/* Main navigation */}
-        <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
-          <div className="px-3 py-2">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-              Principal
-            </p>
-            {navigation.map((item) => {
-              const isActive = location.pathname === item.href
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    isActive
-                      ? 'bg-blue-600 text-white shadow-lg'
-                      : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
-                  }`}
-                >
-                  <item.icon className={`h-5 w-5 ${
-                    isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'
-                  }`} />
-                  <div className="flex-1">
-                    <p>{item.name}</p>
-                    <p className="text-xs text-slate-400 group-hover:text-slate-300">
-                      {item.description}
-                    </p>
-                  </div>
-                  {isActive && (
-                    <div className="w-2 h-2 bg-white rounded-full"></div>
-                  )}
-                </Link>
-              )
-            })}
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto py-4">
+          {/* Main Nav */}
+          <div className="px-3 mb-4">
+            {mainNav.map((item) => (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium mb-1 transition-colors ${
+                  isActive(item.href)
+                    ? 'bg-blue-600 text-white'
+                    : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+                }`}
+              >
+                <item.icon className="h-5 w-5" />
+                {item.name}
+              </Link>
+            ))}
           </div>
 
-          <div className="px-3 py-4">
+          {/* Modules */}
+          <div className="px-3">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
               Módulos
             </p>
-            {modules.map((section) => {
-              const isExpanded = expandedItems.includes(section.name)
-              const isActive = location.pathname.startsWith(section.href) && section.href !== '#'
+            {modules.map((module) => {
+              const isExpanded = expandedItems.includes(module.name)
+              const hasActiveChild = module.items.some(item => isActive(item.href))
               
               return (
-                <div key={section.name} className="mb-2">
+                <div key={module.name} className="mb-2">
                   <button
-                    onClick={() => toggleExpanded(section.name)}
+                    onClick={() => toggleExpanded(module.name)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      isActive
+                      hasActiveChild
                         ? 'bg-slate-700/50 text-white'
                         : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
                     }`}
                   >
-                    <section.icon className="h-5 w-5 text-slate-400" />
-                    <span className="flex-1 text-left">{section.name}</span>
-                    <ChevronDown className={`h-4 w-4 transition-transform ${
-                      isExpanded ? 'rotate-180' : ''
-                    }`} />
+                    <module.icon className="h-5 w-5 text-slate-400" />
+                    <span className="flex-1 text-left">{module.name}</span>
+                    <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                   </button>
                   
                   {isExpanded && (
-                    <div className="ml-8 mt-1 space-y-1">
-                      {section.children?.map((child) => {
-                        const isChildActive = location.pathname === child.href
-                        return (
-                          <Link
-                            key={child.name}
-                            to={child.href}
-                            onClick={() => setSidebarOpen(false)}
-                            className={`block px-3 py-2 rounded-md text-sm transition-colors ${
-                              isChildActive
-                                ? 'bg-blue-600/20 text-blue-300 border-l-2 border-blue-400'
-                                : 'text-slate-400 hover:text-white hover:bg-slate-700/30'
-                            }`}
-                          >
-                            {child.name}
-                          </Link>
-                        )
-                      })}
+                    <div className="ml-4 mt-1 space-y-1">
+                      {module.items.map((item) => (
+                        <Link
+                          key={item.name}
+                          to={item.href}
+                          className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                            isActive(item.href)
+                              ? 'bg-blue-600/20 text-blue-400'
+                              : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                          }`}
+                        >
+                          <item.icon className="h-4 w-4" />
+                          {item.name}
+                        </Link>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -262,113 +211,53 @@ export default function Layout({ children }: LayoutProps) {
           </div>
         </nav>
 
-        {/* User section */}
-        <div className="p-4 border-t border-slate-700/50 space-y-3">
-          <div className="flex items-center gap-3 px-3 py-2 bg-slate-800/50 rounded-lg">
-            <div className="relative">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white text-sm font-bold shadow-lg">
-                {user?.nombre?.charAt(0)}{user?.apellido?.charAt(0)}
-              </div>
-              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-slate-800"></div>
+        {/* User */}
+        <div className="border-t border-slate-700 p-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 bg-slate-600 rounded-full flex items-center justify-center">
+              <User className="h-5 w-5" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">
-                {user?.nombre} {user?.apellido}
-              </p>
-              <p className="text-xs text-slate-400 truncate">{user?.email}</p>
-              <p className="text-xs text-blue-400 truncate">
-                {user?.roles?.join(', ')}
-              </p>
+              <p className="text-sm font-medium truncate">{user?.nombreCompleto || 'Usuario'}</p>
+              <p className="text-xs text-slate-400 truncate">{user?.email || 'admin@erp.com'}</p>
             </div>
-          </div>
-          
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex-1 text-slate-300 hover:text-white hover:bg-slate-700/50"
-            >
-              <Settings className="h-4 w-4 mr-2" />
-              Config
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex-1 text-slate-300 hover:text-red-400 hover:bg-red-500/10"
-              onClick={handleLogout}
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Salir
-            </Button>
+            <button onClick={handleLogout} className="text-slate-400 hover:text-white">
+              <LogOut className="h-5 w-5" />
+            </button>
           </div>
         </div>
       </aside>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 lg:ml-72">
         {/* Top bar */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30 shadow-sm">
+        <header className="sticky top-0 z-30 h-16 bg-white border-b flex items-center justify-between px-4 lg:px-6">
+          <button onClick={() => setSidebarOpen(true)} className="lg:hidden">
+            <Menu className="h-6 w-6" />
+          </button>
+
           <div className="flex items-center gap-4">
-            <button
-              className="lg:hidden p-2 rounded-md hover:bg-slate-100 transition-colors"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Menu className="h-5 w-5" />
+            <div className="relative hidden md:block">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Buscar..."
+                className="pl-10 pr-4 py-2 w-64 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <button className="relative">
+              <Bell className="h-5 w-5 text-slate-600" />
+              <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">3</span>
             </button>
-            
-            <div className="hidden sm:block">
-              <h1 className="text-lg font-semibold text-slate-900">
-                {navigation.find(item => location.pathname === item.href)?.name || 'ERP SAS'}
-              </h1>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Quick actions */}
-            <div className="hidden md:flex items-center gap-2 mr-4">
-              <Button variant="outline" size="sm">
-                <Calendar className="h-4 w-4 mr-2" />
-                Hoy
-              </Button>
-              <Button variant="outline" size="sm">
-                <TrendingUp className="h-4 w-4 mr-2" />
-                Reportes
-              </Button>
-            </div>
-
-            {/* Notifications */}
-            <Button variant="ghost" size="sm" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </Button>
-
-            {/* Help */}
-            <Button variant="ghost" size="sm">
-              <HelpCircle className="h-5 w-5" />
-            </Button>
-
-            {/* User info */}
-            <div className="hidden sm:flex items-center gap-3 pl-3 border-l border-slate-200">
-              <div className="text-right">
-                <p className="text-sm font-medium text-slate-900">
-                  {user?.nombre} {user?.apellido}
-                </p>
-                <p className="text-xs text-slate-500">
-                  {user?.roles?.join(', ')}
-                </p>
-              </div>
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white text-sm font-bold">
-                {user?.nombre?.charAt(0)}{user?.apellido?.charAt(0)}
-              </div>
-            </div>
+            <button>
+              <HelpCircle className="h-5 w-5 text-slate-600" />
+            </button>
           </div>
         </header>
 
         {/* Page content */}
-        <main className="flex-1 p-4 lg:p-6 bg-gradient-to-br from-slate-50 to-blue-50/30">
-          <div className="max-w-7xl mx-auto">
-            {children}
-          </div>
+        <main className="p-4 lg:p-6">
+          {children || <Outlet />}
         </main>
       </div>
     </div>
