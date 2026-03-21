@@ -23,6 +23,8 @@ import ProveedoresPage from './pages/logistica/ProveedoresPage'
 import AsistenciaPage from './pages/rrhh/AsistenciaPage'
 import VacacionesPage from './pages/rrhh/VacacionesPage'
 import NominaPage from './pages/rrhh/NominaPage'
+import TareasPage from './pages/proyectos/TareasPage'
+import GanttPage from './pages/proyectos/GanttPage'
 import { Toaster } from './components/ui/toast'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -46,6 +48,8 @@ export default function App() {
         <Route path="/clientes" element={<PrivateRoute><Layout><ClientesPage /></Layout></PrivateRoute>} />
         <Route path="/cotizaciones" element={<PrivateRoute><Layout><CotizacionesPage /></Layout></PrivateRoute>} />
         <Route path="/proyectos" element={<PrivateRoute><Layout><ProyectosPage /></Layout></PrivateRoute>} />
+        <Route path="/tareas" element={<PrivateRoute><Layout><TareasPage /></Layout></PrivateRoute>} />
+        <Route path="/gantt" element={<PrivateRoute><Layout><GanttPage /></Layout></PrivateRoute>} />
         <Route path="/operaciones" element={<PrivateRoute><Layout><OperacionesPage /></Layout></PrivateRoute>} />
         <Route path="/empleados" element={<PrivateRoute><Layout><EmpleadosPage /></Layout></PrivateRoute>} />
         <Route path="/tickets" element={<PrivateRoute><Layout><TicketsPage /></Layout></PrivateRoute>} />
