@@ -27,6 +27,7 @@ import {
   Wrench,
   CreditCard,
   Clock,
+  DollarSign,
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -86,7 +87,7 @@ const rrhh = [
 ]
 
 const finanzas = [
-  { name: 'Facturación', href: '/facturacion', icon: DollarSign },
+  { name: 'Facturación', href: '/facturacion', icon: CreditCard },
   { name: 'Pagos', href: '/pagos', icon: CreditCard },
 ]
 
@@ -100,7 +101,7 @@ const modules = [
   { name: 'Proyectos', children: proyectos, icon: FolderKanban },
   { name: 'Operaciones', children: operaciones, icon: Package },
   { name: 'RRHH', children: rrhh, icon: Users },
-  { name: 'Finanzas', children: finanzas, icon: DollarSign },
+  { name: 'Finanzas', children: finanzas, icon: CreditCard },
   { name: 'Reportes', children: reportes, icon: BarChart3 },
 ]
 
