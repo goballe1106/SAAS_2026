@@ -22,7 +22,7 @@ const ESTADOS_MANT = [
 ]
 
 export default function MantenimientosTIPage() {
-  const [mantenimientos, setMantenimientos] = useState<any>([
+  const [mantenimientos, setMantenimientos] = useState<any[]>([
     { id: 1, activo: 'TI-001', descripcion: 'Cambio de pasta térmica', tipo: 'preventivo', estado: 'programado', responsable: 'Juan Pérez', fechaProgramada: '2026-03-25', costo: 150 },
     { id: 2, activo: 'TI-002', descripcion: 'Reparación de disco duro', tipo: 'correctivo', estado: 'en_proceso', responsable: 'Carlos López', fechaProgramada: '2026-03-20', costo: 300 },
   ])
@@ -42,15 +42,15 @@ export default function MantenimientosTIPage() {
     setFormData({ activoId: '', descripcion: '', tipo: 'preventivo', estado: 'programado', responsable: '', fechaProgramada: '', costo: 0, observaciones: '' })
   }
 
-  const mantFiltrados = mantenimientos.filter(m => 
+  const mantFiltrados = mantenimientos.filter((m: any) => 
     m.descripcion.toLowerCase().includes(search.toLowerCase()) || m.activo.toLowerCase().includes(search.toLowerCase())
   )
 
   const stats = {
     total: mantenimientos.length,
-    programados: mantenimientos.filter(m => m.estado === 'programado').length,
-    enProceso: mantenimientos.filter(m => m.estado === 'en_proceso').length,
-    completados: mantenimientos.filter(m => m.estado === 'completado').length,
+    programados: mantenimientos.filter((m: any) => m.estado === 'programado').length,
+    enProceso: mantenimientos.filter((m: any) => m.estado === 'en_proceso').length,
+    completados: mantenimientos.filter((m: any) => m.estado === 'completado').length,
   }
 
   return (
@@ -198,7 +198,7 @@ export default function MantenimientosTIPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {mantFiltrados.map((mant) => {
+            {mantFiltrados.map((mant: any) => {
               const estado = ESTADOS_MANT.find(e => e.value === mant.estado)
               const tipo = TIPOS_MANTENIMIENTO.find(t => t.value === mant.tipo)
               const Icono = estado?.icon || Calendar
