@@ -24,6 +24,9 @@ import {
   FolderTree,
   Briefcase,
   FolderKanban,
+  Wrench,
+  CreditCard,
+  Clock,
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -38,30 +41,6 @@ const navigation = [
     href: '/', 
     icon: LayoutDashboard,
     description: 'Resumen general'
-  },
-  { 
-    name: 'Clientes', 
-    href: '/clientes', 
-    icon: Users,
-    description: 'Gestión de clientes'
-  },
-  { 
-    name: 'Cotizaciones', 
-    href: '/cotizaciones', 
-    icon: FileText,
-    description: 'Propuestas comerciales'
-  },
-  { 
-    name: 'Proyectos', 
-    href: '/proyectos', 
-    icon: FolderKanban,
-    description: 'Gestión de proyectos'
-  },
-  { 
-    name: 'Operaciones', 
-    href: '/operaciones', 
-    icon: Package,
-    description: 'Mantenimiento y operaciones'
   },
   { 
     name: 'Usuarios', 
@@ -83,37 +62,46 @@ const navigation = [
   },
 ]
 
-const secondaryNavigation = [
-  {
-    name: 'Comercial',
-    href: '#',
-    icon: Briefcase,
-    children: [
-      { name: 'Clientes', href: '/clientes' },
-      { name: 'Cotizaciones', href: '/cotizaciones' },
-      { name: 'Proyectos', href: '/proyectos' },
-    ]
-  },
-  {
-    name: 'Operaciones',
-    href: '#',
-    icon: Package,
-    children: [
-      { name: 'Inventario', href: '/inventario' },
-      { name: 'Activos TI', href: '/activos' },
-      { name: 'Tickets', href: '/tickets' },
-    ]
-  },
-  {
-    name: 'Reportes',
-    href: '#',
-    icon: BarChart3,
-    children: [
-      { name: 'Analytics', href: '/analytics' },
-      { name: 'Auditoría', href: '/auditoria' },
-      { name: 'Logs', href: '/logs' },
-    ]
-  },
+const comercial = [
+  { name: 'Clientes', href: '/clientes', icon: Users },
+  { name: 'Contactos', href: '/contactos', icon: Mail },
+  { name: 'Oportunidades', href: '/oportunidades', icon: TrendingUp },
+  { name: 'Cotizaciones', href: '/cotizaciones', icon: FileText },
+]
+
+const proyectos = [
+  { name: 'Proyectos', href: '/proyectos', icon: FolderKanban },
+  { name: 'Tareas', href: '/tareas', icon: Calendar },
+]
+
+const operaciones = [
+  { name: 'Inventario', href: '/inventario', icon: Package },
+  { name: 'Activos', href: '/activos', icon: Wrench },
+  { name: 'Mantenimiento', href: '/operaciones', icon: Settings },
+]
+
+const rrhh = [
+  { name: 'Empleados', href: '/empleados', icon: Users },
+  { name: 'Asistencia', href: '/asistencia', icon: Clock },
+]
+
+const finanzas = [
+  { name: 'Facturación', href: '/facturacion', icon: DollarSign },
+  { name: 'Pagos', href: '/pagos', icon: CreditCard },
+]
+
+const reportes = [
+  { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+  { name: 'Auditoría', href: '/auditoria', icon: Shield },
+]
+
+const modules = [
+  { name: 'Comercial/CRM', children: comercial, icon: Briefcase },
+  { name: 'Proyectos', children: proyectos, icon: FolderKanban },
+  { name: 'Operaciones', children: operaciones, icon: Package },
+  { name: 'RRHH', children: rrhh, icon: Users },
+  { name: 'Finanzas', children: finanzas, icon: DollarSign },
+  { name: 'Reportes', children: reportes, icon: BarChart3 },
 ]
 
 export default function Layout({ children }: LayoutProps) {
@@ -225,7 +213,7 @@ export default function Layout({ children }: LayoutProps) {
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
               Módulos
             </p>
-            {secondaryNavigation.map((section) => {
+            {modules.map((section) => {
               const isExpanded = expandedItems.includes(section.name)
               const isActive = location.pathname.startsWith(section.href) && section.href !== '#'
               
