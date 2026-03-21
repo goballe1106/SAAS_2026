@@ -29,6 +29,15 @@ import {
   CreditCard,
   Clock,
   DollarSign,
+  Truck,
+  Monitor,
+  Key,
+  ClipboardList,
+  BookOpen,
+  Calculator,
+  ShoppingCart,
+  Ticket,
+  Plus,
 } from 'lucide-react'
 
 interface LayoutProps {
@@ -44,54 +53,73 @@ const mainNav = [
 
 const modules = [
   { 
-    name: 'Comercial/CRM', 
-    icon: Briefcase,
-    items: [
-      { name: 'Clientes', href: '/clientes', icon: Users },
-      { name: 'Contactos', href: '/contactos', icon: Mail },
-      { name: 'Oportunidades', href: '/oportunidades', icon: TrendingUp },
-      { name: 'Cotizaciones', href: '/cotizaciones', icon: FileText },
-    ]
-  },
-  { 
-    name: 'Proyectos', 
+    name: 'Proyectos y Obras', 
     icon: FolderKanban,
     items: [
       { name: 'Proyectos', href: '/proyectos', icon: FolderKanban },
       { name: 'Tareas', href: '/tareas', icon: Calendar },
+      { name: 'Gantt', href: '/gantt', icon: BarChart3 },
+    ]
+  },
+  { 
+    name: 'Contabilidad', 
+    icon: DollarSign,
+    items: [
+      { name: 'Facturación', href: '/facturacion', icon: FileText },
+      { name: 'Costos', href: '/costos', icon: CreditCard },
+      { name: 'Presupuestos', href: '/presupuestos', icon: Calculator },
     ]
   },
   { 
     name: 'Operaciones', 
-    icon: Package,
+    icon: Wrench,
     items: [
-      { name: 'Inventario', href: '/inventario', icon: Package },
-      { name: 'Activos', href: '/activos', icon: Wrench },
-      { name: 'Mantenimiento', href: '/operaciones', icon: Settings },
+      { name: 'Órdenes de Trabajo', href: '/operaciones', icon: ClipboardList },
+      { name: 'Bitácoras', href: '/bitacoras', icon: BookOpen },
+      { name: 'Reportes de Avance', href: '/reportes', icon: FileText },
     ]
   },
   { 
-    name: 'RRHH', 
+    name: 'Logística', 
+    icon: Truck,
+    items: [
+      { name: 'Inventario', href: '/inventario', icon: Package },
+      { name: 'Compras', href: '/compras', icon: ShoppingCart },
+      { name: 'Proveedores', href: '/proveedores', icon: Users },
+    ]
+  },
+  { 
+    name: 'Inventario TI', 
+    icon: Monitor,
+    items: [
+      { name: 'Equipos', href: '/equipos', icon: Monitor },
+      { name: 'Licencias', href: '/licencias', icon: Key },
+      { name: 'Mantenimiento', href: '/mantenimiento', icon: Settings },
+    ]
+  },
+  { 
+    name: 'Recursos Humanos', 
     icon: Users,
     items: [
       { name: 'Empleados', href: '/empleados', icon: Users },
-      { name: 'Asistencia', href: '/asistencia', icon: Clock },
+      { name: 'Nómina', href: '/nomina', icon: DollarSign },
+      { name: 'Vacaciones', href: '/vacaciones', icon: Calendar },
     ]
   },
   { 
-    name: 'Finanzas', 
-    icon: DollarSign,
+    name: 'Tickets', 
+    icon: Ticket,
     items: [
-      { name: 'Facturación', href: '/facturacion', icon: FileText },
-      { name: 'Pagos', href: '/pagos', icon: CreditCard },
+      { name: 'Mis Tickets', href: '/tickets', icon: Ticket },
+      { name: 'Nuevo Ticket', href: '/tickets/nuevo', icon: Plus },
     ]
   },
   { 
-    name: 'Reportes', 
-    icon: BarChart3,
+    name: 'Dashboard', 
+    icon: LayoutDashboard,
     items: [
-      { name: 'Analytics', href: '/analytics', icon: BarChart3 },
-      { name: 'Auditoría', href: '/auditoria', icon: Shield },
+      { name: 'KPIs', href: '/dashboard', icon: BarChart3 },
+      { name: 'Reportes', href: '/reportes', icon: FileText },
     ]
   },
 ]
