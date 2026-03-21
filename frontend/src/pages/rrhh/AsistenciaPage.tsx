@@ -39,10 +39,10 @@ export default function AsistenciaPage() {
   }
 
   const stats = {
-    presentes: asistencia.filter(a => a.estado === 'presente').length,
-    faltas: asistencia.filter(a => a.estado === 'falta').length,
-    tardanzas: asistencia.filter(a => a.estado === 'tardanza').length,
-    permisos: asistencia.filter(a => a.estado === 'permiso').length,
+    presentes: asistencias.filter((a: any) => a.estado === 'presente').length,
+    faltas: asistencias.filter((a: any) => a.estado === 'falta').length,
+    tardanzas: asistencias.filter((a: any) => a.estado === 'tardanza').length,
+    permisos: asistencias.filter((a: any) => a.estado === 'permiso').length,
   }
 
   return (

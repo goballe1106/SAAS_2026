@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { 
   DollarSign, Search, Plus, Edit, Trash2, User, Calendar, TrendingUp, 
-  TrendingDown, FileText, Download
+  TrendingDown,
+  Clock as Reloj,
+  Clock, FileText, Download
 } from 'lucide-react'
 
 export default function NominaPage() {
