@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify'
-import { ProyectosService, createProyectoSchema, updateProyectoSchema } from '../services/proyectos.service'
+import { ProyectosService, createProyectoSchema, updateProyectoSchema } from '../services.service'
 import { z } from 'zod'
 
 export async function proyectosRoutes(fastify: FastifyInstance) {
@@ -17,7 +17,7 @@ export async function proyectosRoutes(fastify: FastifyInstance) {
   // ============================================================
 
   // GET proyectos
-  fastify.get('/proyectos', async (request, reply) => {
+  fastify.get('/'), async (request, reply) => {
     try {
       const { page = 1, limit = 10, search, estado, areaId, responsableId } = request.query as any
       
@@ -38,7 +38,7 @@ export async function proyectosRoutes(fastify: FastifyInstance) {
   })
 
   // GET proyectos/stats
-  fastify.get('/proyectos/stats', async (request, reply) => {
+  fastify.get('/stats', async (request, reply) => {
     try {
       const stats = await proyectosService.getProyectosStats()
       return reply.send(stats)
@@ -49,7 +49,7 @@ export async function proyectosRoutes(fastify: FastifyInstance) {
   })
 
   // GET proyectos/options
-  fastify.get('/proyectos/options', async (request, reply) => {
+  fastify.get('/options', async (request, reply) => {
     try {
       const { search } = request.query as any
       const proyectos = await proyectosService.getProyectosOptions(search)
@@ -61,7 +61,7 @@ export async function proyectosRoutes(fastify: FastifyInstance) {
   })
 
   // GET proyectos/:id
-  fastify.get('/proyectos/:id', async (request, reply) => {
+  fastify.get('/:id', async (request, reply) => {
     try {
       const { id } = request.params as any
       const proyecto = await proyectosService.getProyectoById(id)
@@ -78,7 +78,7 @@ export async function proyectosRoutes(fastify: FastifyInstance) {
   })
 
   // POST proyectos
-  fastify.post('/proyectos', async (request, reply) => {
+  fastify.post('', async (request, reply) => {
     try {
       const validatedData = createProyectoSchema.parse(request.body)
       const proyecto = await proyectosService.createProyecto(validatedData)
@@ -98,7 +98,7 @@ export async function proyectosRoutes(fastify: FastifyInstance) {
   })
 
   // PUT proyectos/:id
-  fastify.put('/proyectos/:id', async (request, reply) => {
+  fastify.put('/:id', async (request, reply) => {
     try {
       const { id } = request.params as any
       const validatedData = updateProyectoSchema.parse(request.body)
@@ -124,7 +124,7 @@ export async function proyectosRoutes(fastify: FastifyInstance) {
   })
 
   // DELETE proyectos/:id
-  fastify.delete('/proyectos/:id', async (request, reply) => {
+  fastify.delete('/:id', async (request, reply) => {
     try {
       const { id } = request.params as any
       
@@ -187,7 +187,7 @@ export async function proyectosRoutes(fastify: FastifyInstance) {
   // ============================================================
 
   // GET proyectos/:id/hitos
-  fastify.get('/proyectos/:id/hitos', async (request, reply) => {
+  fastify.get('/:id/hitos', async (request, reply) => {
     try {
       const { id } = request.params as any
       const hitos = await proyectosService.getHitosByProyecto(id)
@@ -199,7 +199,7 @@ export async function proyectosRoutes(fastify: FastifyInstance) {
   })
 
   // POST proyectos/:id/hitos
-  fastify.post('/proyectos/:id/hitos', async (request, reply) => {
+  fastify.post('/:id/hitos', async (request, reply) => {
     try {
       const { id } = request.params as any
       const hitoData = {
