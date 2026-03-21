@@ -58,6 +58,12 @@ const navigation = [
     description: 'Gestión de proyectos'
   },
   { 
+    name: 'Operaciones', 
+    href: '/operaciones', 
+    icon: Package,
+    description: 'Mantenimiento y operaciones'
+  },
+  { 
     name: 'Usuarios', 
     href: '/usuarios', 
     icon: Users,
