@@ -15,6 +15,8 @@ import ActivosTIPage from './pages/inventario/ActivosTIPage'
 import MantenimientosTIPage from './pages/inventario/MantenimientosTIPage'
 import LicenciasPage from './pages/inventario/LicenciasPage'
 import KPIsTIPage from './pages/inventario/KPIsTIPage'
+import FacturacionPage from './pages/contabilidad/FacturacionPage'
+import CostosPage from './pages/contabilidad/CostosPage'
 import { Toaster } from './components/ui/toast'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -45,6 +47,8 @@ export default function App() {
         <Route path="/mantenimiento" element={<PrivateRoute><Layout><MantenimientosTIPage /></Layout></PrivateRoute>} />
         <Route path="/licencias" element={<PrivateRoute><Layout><LicenciasPage /></Layout></PrivateRoute>} />
         <Route path="/kpis-ti" element={<PrivateRoute><Layout><KPIsTIPage /></Layout></PrivateRoute>} />
+        <Route path="/facturacion" element={<PrivateRoute><Layout><FacturacionPage /></Layout></PrivateRoute>} />
+        <Route path="/costos" element={<PrivateRoute><Layout><CostosPage /></Layout></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Toaster />
